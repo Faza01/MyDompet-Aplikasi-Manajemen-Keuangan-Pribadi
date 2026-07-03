@@ -49,30 +49,66 @@ class _MainNavigationHubState extends State<MainNavigationHub> {
           height: 120.0,
           child: Stack(
             children: [
-              // 1. Gradient Blur Background Layer
+              // 1. Gradient Blur Background Layer (Impeller-Safe Stacked Bands)
               Positioned.fill(
-                child: ShaderMask(
-                  shaderCallback: (rect) {
-                    return const LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black12,
-                        Colors.black38,
-                        Colors.black87,
-                        Colors.black,
-                      ],
-                      stops: [0.0, 0.3, 0.6, 0.85, 1.0],
-                    ).createShader(rect);
-                  },
-                  blendMode: BlendMode.dstIn,
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                    child: Container(
-                      color: Colors.black.withOpacity(0.05), // Low opacity paint to trigger BackdropFilter
+                child: Column(
+                  children: [
+                    // Band 1: y = 0 to 24, Blur = 1.5
+                    ClipRect(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 1.5, sigmaY: 1.5),
+                        child: SizedBox(
+                          height: 24.0,
+                          width: double.infinity,
+                          child: Container(color: Colors.transparent),
+                        ),
+                      ),
                     ),
-                  ),
+                    // Band 2: y = 24 to 48, Blur = 3.5
+                    ClipRect(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 3.5, sigmaY: 3.5),
+                        child: SizedBox(
+                          height: 24.0,
+                          width: double.infinity,
+                          child: Container(color: Colors.transparent),
+                        ),
+                      ),
+                    ),
+                    // Band 3: y = 48 to 72, Blur = 6.0
+                    ClipRect(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+                        child: SizedBox(
+                          height: 24.0,
+                          width: double.infinity,
+                          child: Container(color: Colors.transparent),
+                        ),
+                      ),
+                    ),
+                    // Band 4: y = 72 to 96, Blur = 9.0
+                    ClipRect(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 9.0, sigmaY: 9.0),
+                        child: SizedBox(
+                          height: 24.0,
+                          width: double.infinity,
+                          child: Container(color: Colors.transparent),
+                        ),
+                      ),
+                    ),
+                    // Band 5: y = 96 to 120, Blur = 13.0
+                    ClipRect(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 13.0, sigmaY: 13.0),
+                        child: SizedBox(
+                          height: 24.0,
+                          width: double.infinity,
+                          child: Container(color: Colors.transparent),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               // 2. Floating Navbar Capsule
