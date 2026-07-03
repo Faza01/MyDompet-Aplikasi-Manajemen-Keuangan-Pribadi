@@ -44,43 +44,38 @@ class _MainNavigationHubState extends State<MainNavigationHub> {
         index: _currentIndex,
         children: _screens,
       ),
-      bottomNavigationBar: ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 280.0,
-                    height: 64.0,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2C2C2C), // Solid Charcoal Gray navbar
-                      borderRadius: BorderRadius.circular(16.0),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.15),
-                          blurRadius: 16.0,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 280.0,
+                height: 64.0,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2C2C2C), // Solid Charcoal Gray navbar
+                  borderRadius: BorderRadius.circular(16.0),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.15),
+                      blurRadius: 16.0,
+                      offset: const Offset(0, 8),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildNavItem(0, Icons.home_outlined),
-                        _buildNavItem(1, Icons.pie_chart_outline),
-                        _buildCenterPlusButton(),
-                        _buildNavItem(3, Icons.analytics_outlined),
-                        _buildNavItem(4, Icons.settings_outlined),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildNavItem(0, Icons.home_outlined),
+                    _buildNavItem(1, Icons.pie_chart_outline),
+                    _buildCenterPlusButton(),
+                    _buildNavItem(3, Icons.analytics_outlined),
+                    _buildNavItem(4, Icons.settings_outlined),
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),

@@ -41,10 +41,11 @@ class BudgetingScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
       ),
       body: SafeArea(
+        bottom: false,
         child: progressAsync.when(
           data: (progressList) {
             return ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 8.0, bottom: 100.0),
               itemCount: progressList.length,
               itemBuilder: (context, index) {
                 final prog = progressList[index];
