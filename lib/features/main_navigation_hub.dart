@@ -44,26 +44,21 @@ class _MainNavigationHubState extends State<MainNavigationHub> {
         index: _currentIndex,
         children: _screens,
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16.0),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                  child: Container(
+      bottomNavigationBar: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
                     width: 280.0,
                     height: 64.0,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2C2C2C).withOpacity(isDarkMode ? 0.4 : 0.55),
+                      color: const Color(0xFF2C2C2C), // Solid Charcoal Gray navbar
                       borderRadius: BorderRadius.circular(16.0),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(isDarkMode ? 0.08 : 0.05),
-                        width: 1.0,
-                      ),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.15),
@@ -83,9 +78,9 @@ class _MainNavigationHubState extends State<MainNavigationHub> {
                       ],
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
