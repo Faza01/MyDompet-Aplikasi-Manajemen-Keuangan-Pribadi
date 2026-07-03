@@ -610,10 +610,10 @@ class _QuickInputDialogState extends ConsumerState<QuickInputDialog> {
                     child: ChoiceChip(
                       label: const Center(child: Text('Pemasukan', style: TextStyle(fontSize: 12.0))),
                       selected: _type == 'income',
-                      selectedColor: const Color(0xFFFC8A40).withOpacity(0.15),
-                      checkmarkColor: const Color(0xFFFC8A40),
+                      selectedColor: const Color(0xFF10B981).withOpacity(0.15),
+                      checkmarkColor: const Color(0xFF10B981),
                       labelStyle: TextStyle(
-                        color: _type == 'income' ? const Color(0xFFFC8A40) : Colors.grey,
+                        color: _type == 'income' ? const Color(0xFF10B981) : Colors.grey,
                         fontWeight: FontWeight.bold,
                       ),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
