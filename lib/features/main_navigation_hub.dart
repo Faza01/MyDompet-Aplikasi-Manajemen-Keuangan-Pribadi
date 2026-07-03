@@ -51,23 +51,26 @@ class _MainNavigationHubState extends State<MainNavigationHub> {
             children: [
               // 1. Gradient Blur Background Layer
               Positioned.fill(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                  child: ShaderMask(
-                    shaderCallback: (rect) {
-                      return const LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black,
-                        ],
-                        stops: [0.0, 0.7],
-                      ).createShader(rect);
-                    },
-                    blendMode: BlendMode.dstIn,
+                child: ShaderMask(
+                  shaderCallback: (rect) {
+                    return const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black12,
+                        Colors.black38,
+                        Colors.black87,
+                        Colors.black,
+                      ],
+                      stops: [0.0, 0.3, 0.6, 0.85, 1.0],
+                    ).createShader(rect);
+                  },
+                  blendMode: BlendMode.dstIn,
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                     child: Container(
-                      color: Colors.black.withOpacity(0.02),
+                      color: Colors.black.withOpacity(0.05), // Low opacity paint to trigger BackdropFilter
                     ),
                   ),
                 ),
