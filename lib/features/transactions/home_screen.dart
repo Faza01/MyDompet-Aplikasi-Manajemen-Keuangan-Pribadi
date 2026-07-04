@@ -186,22 +186,24 @@ class HomeScreen extends ConsumerWidget {
 
               // Account Switcher Horizontal list (Stack Carousel)
               SliverToBoxAdapter(
-                child: Container(
-                  height: 185.0,
-                  margin: const EdgeInsets.symmetric(vertical: 12.0),
-                  child: accountsAsync.when(
-                    data: (accounts) {
-                      final totalBalance = accounts.fold(0.0, (sum, acc) => sum + acc.balance);
+                child: RepaintBoundary(
+                  child: Container(
+                    height: 185.0,
+                    margin: const EdgeInsets.symmetric(vertical: 12.0),
+                    child: accountsAsync.when(
+                      data: (accounts) {
+                        final totalBalance = accounts.fold(0.0, (sum, acc) => sum + acc.balance);
 
-                      return AccountStackCarousel(
-                        accounts: accounts,
-                        totalBalance: totalBalance,
-                        selectedAccountId: selectedAccountId,
-                        ref: ref,
-                      );
-                    },
-                    loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (err, st) => Center(child: Text('Error loading akun: $err')),
+                        return AccountStackCarousel(
+                          accounts: accounts,
+                          totalBalance: totalBalance,
+                          selectedAccountId: selectedAccountId,
+                          ref: ref,
+                        );
+                      },
+                      loading: () => const Center(child: CircularProgressIndicator()),
+                      error: (err, st) => Center(child: Text('Error loading akun: $err')),
+                    ),
                   ),
                 ),
               ),
