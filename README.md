@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/icon/new_icon_padded.png" alt="MyDompet app icon" width="150" />
+<img src="assets/icon/icon_readme_rounded.png" alt="MyDompet app icon" width="150" />
 
 # MyDompet
 
