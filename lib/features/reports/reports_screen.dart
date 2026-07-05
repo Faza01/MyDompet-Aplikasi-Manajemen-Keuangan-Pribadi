@@ -401,24 +401,15 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                       context: context,
                       builder: (context) {
                         return Theme(
-                          data: (isDarkMode ? ThemeData.dark() : ThemeData.light()).copyWith(
-                            colorScheme: isDarkMode
-                                ? const ColorScheme.dark(
-                                    primary: Colors.white,
-                                    onPrimary: Colors.black,
-                                    primaryContainer: Colors.white24,
-                                    onPrimaryContainer: Colors.white,
-                                    surface: AppColors.darkModal,
-                                    onSurface: Colors.white,
-                                  )
-                                : const ColorScheme.light(
-                                    primary: Colors.black,
-                                    onPrimary: Colors.white,
-                                    primaryContainer: Color(0xFFE5E5E5),
-                                    onPrimaryContainer: Colors.black,
-                                    surface: Colors.white,
-                                    onSurface: Colors.black,
-                                  ),
+                          data: Theme.of(context).copyWith(
+                            colorScheme: Theme.of(context).colorScheme.copyWith(
+                              primary: isDarkMode ? Colors.white : AppColors.primaryBlack,
+                              onPrimary: isDarkMode ? Colors.black : Colors.white,
+                              primaryContainer: isDarkMode
+                                  ? Colors.black.withValues(alpha: 0.3)
+                                  : Colors.black.withValues(alpha: 0.08),
+                              onPrimaryContainer: isDarkMode ? Colors.white : AppColors.primaryBlack,
+                            ),
                           ),
                           child: DateRangePickerDialog(
                             firstDate: DateTime(2000),
