@@ -398,85 +398,41 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                   onTap: () async {
                     Navigator.pop(context); // Close calendar options dialog
 
-                    // Step 1: Pick start date
-                    final DateTime? startDate = await showDatePicker(
+                    final DateTimeRange? pickedRange = await showDialog<DateTimeRange>(
                       context: context,
-                      initialDate: _selectedDateRange?.start ?? DateTime.now(),
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                      helpText: 'Pilih Tanggal Mulai',
-                      builder: (context, child) {
+                      builder: (context) {
                         return Theme(
                           data: (isDarkMode ? ThemeData.dark() : ThemeData.light()).copyWith(
                             colorScheme: isDarkMode
-                                ? ColorScheme.dark(
+                                ? const ColorScheme.dark(
                                     primary: Colors.white,
                                     onPrimary: Colors.black,
+                                    primaryContainer: Colors.white24,
+                                    onPrimaryContainer: Colors.white,
                                     surface: AppColors.darkModal,
                                     onSurface: Colors.white,
-                                    onSurfaceVariant: Colors.white70,
-                                    outline: Colors.white24,
-                                    surfaceContainerHighest: Colors.white.withValues(alpha: 0.08),
                                   )
-                                : ColorScheme.light(
+                                : const ColorScheme.light(
                                     primary: Colors.black,
                                     onPrimary: Colors.white,
+                                    primaryContainer: Colors.black12, // Black but transparent
+                                    onPrimaryContainer: Colors.black,
                                     surface: Colors.white,
                                     onSurface: Colors.black,
-                                    onSurfaceVariant: Colors.black54,
-                                    outline: Colors.black26,
-                                    surfaceContainerHighest: Colors.black.withValues(alpha: 0.05),
                                   ),
                           ),
-                          child: child!,
+                          child: DateRangePickerDialog(
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(2100),
+                            initialDateRange: _selectedDateRange,
+                          ),
                         );
                       },
                     );
 
-                    if (startDate == null) return;
-
-                    // Step 2: Pick end date
-                    if (!mounted) return;
-                    final DateTime? endDate = await showDatePicker(
-                      context: context,
-                      initialDate: _selectedDateRange?.end ?? startDate,
-                      firstDate: startDate,
-                      lastDate: DateTime(2100),
-                      helpText: 'Pilih Tanggal Selesai',
-                      builder: (context, child) {
-                        return Theme(
-                          data: (isDarkMode ? ThemeData.dark() : ThemeData.light()).copyWith(
-                            colorScheme: isDarkMode
-                                ? ColorScheme.dark(
-                                    primary: Colors.white,
-                                    onPrimary: Colors.black,
-                                    surface: AppColors.darkModal,
-                                    onSurface: Colors.white,
-                                    onSurfaceVariant: Colors.white70,
-                                    outline: Colors.white24,
-                                    surfaceContainerHighest: Colors.white.withValues(alpha: 0.08),
-                                  )
-                                : ColorScheme.light(
-                                    primary: Colors.black,
-                                    onPrimary: Colors.white,
-                                    surface: Colors.white,
-                                    onSurface: Colors.black,
-                                    onSurfaceVariant: Colors.black54,
-                                    outline: Colors.black26,
-                                    surfaceContainerHighest: Colors.black.withValues(alpha: 0.05),
-                                  ),
-                          ),
-                          child: child!,
-                        );
-                      },
-                    );
-
-                    if (endDate != null) {
+                    if (pickedRange != null) {
                       setState(() {
-                        _selectedDateRange = DateTimeRange(
-                          start: startDate,
-                          end: endDate,
-                        );
+                        _selectedDateRange = pickedRange;
                       });
                     }
                   },
