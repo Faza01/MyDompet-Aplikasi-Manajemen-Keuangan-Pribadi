@@ -18,25 +18,25 @@ class Category {
   Color get color {
     switch (icon) {
       case 'work':
-        return const Color(0xFF10B981); // Emerald Green for Gaji
+        return const Color(0xFF2A735B); // Muted Green for Gaji
       case 'card_giftcard':
-        return const Color(0xFF14B8A6); // Teal for Bonus
+        return const Color(0xFF2C736B); // Muted Teal for Bonus
       case 'download':
-        return const Color(0xFF06B6D4); // Cyan for Terima Transfer
+        return const Color(0xFF297481); // Muted Cyan for Terima Transfer
       case 'restaurant':
-        return const Color(0xFFF59E0B); // Amber for Makanan
+        return const Color(0xFF967131); // Amber for Makanan
       case 'directions_car':
-        return const Color(0xFF3B82F6); // Blue for Transportasi
+        return const Color(0xFF3B69B3); // Blue for Transportasi
       case 'shopping_bag':
-        return const Color(0xFFEC4899); // Pink for Belanja
+        return const Color(0xFFAE4277); // Pink for Belanja
       case 'receipt_long':
-        return const Color(0xFFEF4444); // Red/Coral for Tagihan
+        return const Color(0xFFAF4040); // Muted Red for Tagihan
       case 'sports_esports':
-        return const Color(0xFF8B5CF6); // Purple for Hiburan
+        return const Color(0xFF6C47C0); // Muted Purple for Hiburan
       case 'swap_horiz':
-        return const Color(0xFF0EA5E9); // Sky Blue for Transfer Keluar
+        return const Color(0xFF4C46B9); // Indigo for Transfer
       default:
-        return const Color(0xFF9CA3AF); // Grey for Lain-lain
+        return const Color(0xFF7A7F88); // Grey for Lain-lain
     }
   }
 
