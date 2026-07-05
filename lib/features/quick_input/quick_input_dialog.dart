@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../core/nlp/nlp_parser.dart';
 import '../../data/models/category.dart';
@@ -17,6 +18,7 @@ class EditableParsedTransaction {
   AccountWithBalance? account;
   double amount;
   String note;
+  DateTime dateTime;
 
   EditableParsedTransaction({
     required this.rawInput,
@@ -25,7 +27,9 @@ class EditableParsedTransaction {
     required this.type,
     this.category,
     this.account,
-  })  : noteController = TextEditingController(text: note),
+    DateTime? dateTime,
+  })  : dateTime = dateTime ?? DateTime.now(),
+        noteController = TextEditingController(text: note),
         amountController = TextEditingController(
             text: amount > 0 ? amount.toStringAsFixed(0) : '');
 
@@ -293,7 +297,7 @@ class _QuickInputDialogState extends ConsumerState<QuickInputDialog> {
         note: tx.note.trim().isEmpty ? 'Transaksi Tanpa Catatan' : tx.note.trim(),
         rawInput: tx.rawInput,
         inputMethod: 'chat',
-        createdAt: DateTime.now(),
+        createdAt: tx.dateTime,
       );
 
       notifier.addTransaction(newTx);
@@ -803,162 +807,279 @@ class _QuickInputDialogState extends ConsumerState<QuickInputDialog> {
                                         ...message.parsedTransactions!.asMap().entries.map((entry) {
                                           final idx = entry.key;
                                           final tx = entry.value;
-                                          return Container(
-                                            margin: const EdgeInsets.only(top: 10.0),
-                                            padding: const EdgeInsets.all(12.0),
-                                            decoration: BoxDecoration(
-                                              color: isDarkMode ? const Color(0xFF1E222B) : Colors.white,
-                                              borderRadius: BorderRadius.circular(12.0),
-                                              border: Border.all(
-                                                color: isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.08),
-                                                width: 1,
+                                          return IntrinsicHeight(
+                                            child: Container(
+                                              margin: const EdgeInsets.only(top: 10.0),
+                                              decoration: BoxDecoration(
+                                                color: isDarkMode ? const Color(0xFF1E222B) : Colors.white,
+                                                borderRadius: BorderRadius.circular(12.0),
+                                                border: Border.all(
+                                                  color: isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.08),
+                                                  width: 1,
+                                                ),
                                               ),
-                                            ),
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                                              children: [
-                                                Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  children: [
-                                                    Text(
-                                                      'Transaksi #${idx + 1}',
-                                                      style: TextStyle(
-                                                        fontWeight: FontWeight.bold,
-                                                        fontSize: 12.0,
-                                                        color: isDarkMode ? Colors.white70 : Colors.black87,
+                                              child: Row(
+                                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                                children: [
+                                                  Container(
+                                                    width: 4.0,
+                                                    decoration: BoxDecoration(
+                                                      color: tx.type == 'expense' ? Colors.redAccent : const Color(0xFF10B981),
+                                                      borderRadius: const BorderRadius.only(
+                                                        topLeft: Radius.circular(11.0),
+                                                        bottomLeft: Radius.circular(11.0),
                                                       ),
                                                     ),
-                                                    if (!message.isSaved)
-                                                      IconButton(
-                                                        icon: const Icon(Icons.delete_outline_outlined, size: 16, color: Colors.redAccent),
-                                                        onPressed: () {
-                                                          setState(() {
-                                                            message.parsedTransactions!.removeAt(idx);
-                                                            if (message.parsedTransactions!.isEmpty) {
-                                                              message.parsedTransactions = null;
-                                                            }
-                                                          });
-                                                        },
-                                                        constraints: const BoxConstraints(),
-                                                        padding: EdgeInsets.zero,
+                                                  ),
+                                                  Expanded(
+                                                    child: Padding(
+                                                      padding: const EdgeInsets.all(12.0),
+                                                      child: Column(
+                                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                                        children: [
+                                                          Row(
+                                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                            children: [
+                                                              Text(
+                                                                'Transaksi #${idx + 1}',
+                                                                style: TextStyle(
+                                                                  fontWeight: FontWeight.bold,
+                                                                  fontSize: 12.0,
+                                                                  color: isDarkMode ? Colors.white70 : Colors.black87,
+                                                                ),
+                                                              ),
+                                                              if (!message.isSaved)
+                                                                IconButton(
+                                                                  icon: const Icon(Icons.delete_outline_outlined, size: 16, color: Colors.redAccent),
+                                                                  onPressed: () {
+                                                                    setState(() {
+                                                                      message.parsedTransactions!.removeAt(idx);
+                                                                      if (message.parsedTransactions!.isEmpty) {
+                                                                        message.parsedTransactions = null;
+                                                                      }
+                                                                    });
+                                                                  },
+                                                                  constraints: const BoxConstraints(),
+                                                                  padding: EdgeInsets.zero,
+                                                                ),
+                                                            ],
+                                                          ),
+                                                          const SizedBox(height: 8.0),
+                                                          Row(
+                                                            children: [
+                                                              _buildTypeToggleChip(
+                                                                title: 'Pengeluaran',
+                                                                isActive: tx.type == 'expense',
+                                                                activeColor: Colors.redAccent,
+                                                                onTap: message.isSaved
+                                                                    ? null
+                                                                    : () => setState(() => _toggleType(tx, 'expense', categories)),
+                                                                isDarkMode: isDarkMode,
+                                                              ),
+                                                              const SizedBox(width: 8.0),
+                                                              _buildTypeToggleChip(
+                                                                title: 'Pemasukan',
+                                                                isActive: tx.type == 'income',
+                                                                activeColor: const Color(0xFF10B981),
+                                                                onTap: message.isSaved
+                                                                    ? null
+                                                                    : () => setState(() => _toggleType(tx, 'income', categories)),
+                                                                isDarkMode: isDarkMode,
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          const SizedBox(height: 10.0),
+                                                          Row(
+                                                            children: [
+                                                              Expanded(
+                                                                flex: 2,
+                                                                child: TextField(
+                                                                  controller: tx.noteController,
+                                                                  enabled: !message.isSaved,
+                                                                  style: TextStyle(fontSize: 11.5, color: isDarkMode ? Colors.white : Colors.black87),
+                                                                  decoration: InputDecoration(
+                                                                    labelText: 'Catatan',
+                                                                    labelStyle: const TextStyle(fontSize: 10.0),
+                                                                    isDense: true,
+                                                                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                              const SizedBox(width: 6.0),
+                                                              Expanded(
+                                                                flex: 1,
+                                                                child: TextField(
+                                                                  controller: tx.amountController,
+                                                                  enabled: !message.isSaved,
+                                                                  keyboardType: TextInputType.number,
+                                                                  style: TextStyle(fontSize: 11.5, color: isDarkMode ? Colors.white : Colors.black87),
+                                                                  decoration: InputDecoration(
+                                                                    labelText: 'Nominal',
+                                                                    labelStyle: const TextStyle(fontSize: 10.0),
+                                                                    isDense: true,
+                                                                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          const SizedBox(height: 8.0),
+                                                          Row(
+                                                            children: [
+                                                              Expanded(
+                                                                child: DropdownButtonFormField<Category>(
+                                                                  value: tx.category,
+                                                                  disabledHint: tx.category != null ? Text(tx.category!.name, style: const TextStyle(fontSize: 11.0)) : null,
+                                                                  items: categories
+                                                                      .where((c) => c.type == tx.type)
+                                                                      .map((c) => DropdownMenuItem(
+                                                                            value: c,
+                                                                            child: Text(c.name, style: const TextStyle(fontSize: 11.0)),
+                                                                          ))
+                                                                      .toList(),
+                                                                  onChanged: message.isSaved
+                                                                      ? null
+                                                                      : (val) => setState(() => tx.category = val),
+                                                                  decoration: InputDecoration(
+                                                                    labelText: 'Kategori',
+                                                                    labelStyle: const TextStyle(fontSize: 9.5),
+                                                                    isDense: true,
+                                                                    contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                              const SizedBox(width: 6.0),
+                                                              Expanded(
+                                                                child: DropdownButtonFormField<AccountWithBalance>(
+                                                                  value: accounts.any((a) => a.account.id == tx.account?.account.id)
+                                                                      ? accounts.firstWhere((a) => a.account.id == tx.account?.account.id)
+                                                                      : null,
+                                                                  disabledHint: tx.account != null ? Text(tx.account!.account.name, style: const TextStyle(fontSize: 11.0)) : null,
+                                                                  items: accounts
+                                                                      .map((a) => DropdownMenuItem(
+                                                                            value: a,
+                                                                            child: Text(a.account.name, style: const TextStyle(fontSize: 11.0)),
+                                                                          ))
+                                                                      .toList(),
+                                                                  onChanged: message.isSaved
+                                                                      ? null
+                                                                      : (val) => setState(() => tx.account = val),
+                                                                  decoration: InputDecoration(
+                                                                    labelText: 'Dompet',
+                                                                    labelStyle: const TextStyle(fontSize: 9.5),
+                                                                    isDense: true,
+                                                                    contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          const SizedBox(height: 8.0),
+                                                          Row(
+                                                            children: [
+                                                              Expanded(
+                                                                child: InkWell(
+                                                                  onTap: message.isSaved
+                                                                      ? null
+                                                                      : () async {
+                                                                          final selectedDate = await showDatePicker(
+                                                                            context: context,
+                                                                            initialDate: tx.dateTime,
+                                                                            firstDate: DateTime(2000),
+                                                                            lastDate: DateTime(2100),
+                                                                          );
+                                                                          if (selectedDate != null) {
+                                                                            setState(() {
+                                                                              tx.dateTime = DateTime(
+                                                                                selectedDate.year,
+                                                                                selectedDate.month,
+                                                                                selectedDate.day,
+                                                                                tx.dateTime.hour,
+                                                                                tx.dateTime.minute,
+                                                                              );
+                                                                            });
+                                                                          }
+                                                                        },
+                                                                  child: Container(
+                                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                                                    decoration: BoxDecoration(
+                                                                      border: Border.all(
+                                                                        color: isDarkMode ? Colors.white24 : Colors.black26,
+                                                                      ),
+                                                                      borderRadius: BorderRadius.circular(8.0),
+                                                                    ),
+                                                                    child: Row(
+                                                                      children: [
+                                                                        Icon(Icons.calendar_today_outlined, size: 12, color: isDarkMode ? Colors.white70 : Colors.black54),
+                                                                        const SizedBox(width: 6),
+                                                                        Expanded(
+                                                                          child: Text(
+                                                                            DateFormat('dd MMM yyyy').format(tx.dateTime),
+                                                                            style: TextStyle(fontSize: 11.0, color: isDarkMode ? Colors.white : Colors.black87),
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                              const SizedBox(width: 6.0),
+                                                              Expanded(
+                                                                child: InkWell(
+                                                                  onTap: message.isSaved
+                                                                      ? null
+                                                                      : () async {
+                                                                          final selectedTime = await showTimePicker(
+                                                                            context: context,
+                                                                            initialTime: TimeOfDay.fromDateTime(tx.dateTime),
+                                                                          );
+                                                                          if (selectedTime != null) {
+                                                                            setState(() {
+                                                                              tx.dateTime = DateTime(
+                                                                                tx.dateTime.year,
+                                                                                tx.dateTime.month,
+                                                                                tx.dateTime.day,
+                                                                                selectedTime.hour,
+                                                                                selectedTime.minute,
+                                                                              );
+                                                                            });
+                                                                          }
+                                                                        },
+                                                                  child: Container(
+                                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                                                    decoration: BoxDecoration(
+                                                                      border: Border.all(
+                                                                        color: isDarkMode ? Colors.white24 : Colors.black26,
+                                                                      ),
+                                                                      borderRadius: BorderRadius.circular(8.0),
+                                                                    ),
+                                                                    child: Row(
+                                                                      children: [
+                                                                        Icon(Icons.access_time_outlined, size: 12, color: isDarkMode ? Colors.white70 : Colors.black54),
+                                                                        const SizedBox(width: 6),
+                                                                        Expanded(
+                                                                          child: Text(
+                                                                            DateFormat('HH:mm').format(tx.dateTime),
+                                                                            style: TextStyle(fontSize: 11.0, color: isDarkMode ? Colors.white : Colors.black87),
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ],
                                                       ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 8.0),
-                                                Row(
-                                                  children: [
-                                                    _buildTypeToggleChip(
-                                                      title: 'Pengeluaran',
-                                                      isActive: tx.type == 'expense',
-                                                      activeColor: Colors.redAccent,
-                                                      onTap: message.isSaved
-                                                          ? null
-                                                          : () => setState(() => _toggleType(tx, 'expense', categories)),
-                                                      isDarkMode: isDarkMode,
                                                     ),
-                                                    const SizedBox(width: 8.0),
-                                                    _buildTypeToggleChip(
-                                                      title: 'Pemasukan',
-                                                      isActive: tx.type == 'income',
-                                                      activeColor: const Color(0xFF10B981),
-                                                      onTap: message.isSaved
-                                                          ? null
-                                                          : () => setState(() => _toggleType(tx, 'income', categories)),
-                                                      isDarkMode: isDarkMode,
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 10.0),
-                                                Row(
-                                                  children: [
-                                                    Expanded(
-                                                      flex: 2,
-                                                      child: TextField(
-                                                        controller: tx.noteController,
-                                                        enabled: !message.isSaved,
-                                                        style: TextStyle(fontSize: 11.5, color: isDarkMode ? Colors.white : Colors.black87),
-                                                        decoration: InputDecoration(
-                                                          labelText: 'Catatan',
-                                                          labelStyle: const TextStyle(fontSize: 10.0),
-                                                          isDense: true,
-                                                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 6.0),
-                                                    Expanded(
-                                                      flex: 1,
-                                                      child: TextField(
-                                                        controller: tx.amountController,
-                                                        enabled: !message.isSaved,
-                                                        keyboardType: TextInputType.number,
-                                                        style: TextStyle(fontSize: 11.5, color: isDarkMode ? Colors.white : Colors.black87),
-                                                        decoration: InputDecoration(
-                                                          labelText: 'Nominal',
-                                                          labelStyle: const TextStyle(fontSize: 10.0),
-                                                          isDense: true,
-                                                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 8.0),
-                                                Row(
-                                                  children: [
-                                                    Expanded(
-                                                      child: DropdownButtonFormField<Category>(
-                                                        value: tx.category,
-                                                        disabledHint: tx.category != null ? Text(tx.category!.name, style: const TextStyle(fontSize: 11.0)) : null,
-                                                        items: categories
-                                                            .where((c) => c.type == tx.type)
-                                                            .map((c) => DropdownMenuItem(
-                                                                  value: c,
-                                                                  child: Text(c.name, style: const TextStyle(fontSize: 11.0)),
-                                                                ))
-                                                            .toList(),
-                                                        onChanged: message.isSaved
-                                                            ? null
-                                                            : (val) => setState(() => tx.category = val),
-                                                        decoration: InputDecoration(
-                                                          labelText: 'Kategori',
-                                                          labelStyle: const TextStyle(fontSize: 9.5),
-                                                          isDense: true,
-                                                          contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 6.0),
-                                                    Expanded(
-                                                      child: DropdownButtonFormField<AccountWithBalance>(
-                                                        value: accounts.any((a) => a.account.id == tx.account?.account.id)
-                                                            ? accounts.firstWhere((a) => a.account.id == tx.account?.account.id)
-                                                            : null,
-                                                        disabledHint: tx.account != null ? Text(tx.account!.account.name, style: const TextStyle(fontSize: 11.0)) : null,
-                                                        items: accounts
-                                                            .map((a) => DropdownMenuItem(
-                                                                  value: a,
-                                                                  child: Text(a.account.name, style: const TextStyle(fontSize: 11.0)),
-                                                                ))
-                                                            .toList(),
-                                                        onChanged: message.isSaved
-                                                            ? null
-                                                            : (val) => setState(() => tx.account = val),
-                                                        decoration: InputDecoration(
-                                                          labelText: 'Dompet',
-                                                          labelStyle: const TextStyle(fontSize: 9.5),
-                                                          isDense: true,
-                                                          contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                           );
                                         }),
