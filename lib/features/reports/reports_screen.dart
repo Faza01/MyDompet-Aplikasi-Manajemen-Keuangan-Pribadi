@@ -73,200 +73,179 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     }
   }
 
-  Color _getPresetColor(String? colorName) {
-    switch (colorName) {
-      case 'teal':
-        return const Color(0xFF0D9488);
-      case 'orange':
-        return const Color(0xFFF2994A);
-      case 'black':
-        return const Color(0xFF1A1A1A);
-      case 'red':
-        return const Color(0xFFDC2626);
-      case 'gray':
-        return const Color(0xFF6B7280);
-      default:
-        return const Color(0xFF0D9488);
-    }
-  }
-
   void _showWalletFilterBottomSheet(BuildContext context, List<AccountWithBalance> accounts) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: isDarkMode ? const Color(0xFF131D1D) : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.0)),
-      ),
       builder: (context) {
+        // Define tempSelected here, outside the StatefulBuilder's builder callback to persist state!
+        final tempSelected = Set<int>.from(_selectedAccountIds);
+
         return StatefulBuilder(
           builder: (context, setModalState) {
-            final tempSelected = Set<int>.from(_selectedAccountIds);
-
-            return Padding(
-              padding: EdgeInsets.fromLTRB(
-                20.0,
-                20.0,
-                20.0,
-                MediaQuery.of(context).viewInsets.bottom + 24.0,
+            return Dialog(
+              backgroundColor: isDarkMode ? AppColors.darkModal : Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24.0),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Pilih rekening',
-                        style: TextStyle(
-                          fontSize: 20.0,
-                          fontWeight: FontWeight.bold,
-                          color: isDarkMode ? Colors.white : Colors.black87,
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Pilih rekening',
+                          style: TextStyle(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.close,
+                                color: isDarkMode ? Colors.white70 : Colors.black54,
+                                size: 20,
+                              ),
+                              onPressed: () => Navigator.pop(context),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                            const SizedBox(height: 6.0),
+                            GestureDetector(
+                              onTap: () {
+                                setModalState(() {
+                                  tempSelected.clear();
+                                });
+                              },
+                              child: Text(
+                                'Reset',
+                                style: TextStyle(
+                                  fontSize: 13.0,
+                                  color: isDarkMode ? Colors.white54 : Colors.black54,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16.0),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.4,
+                      ),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: accounts.map((acc) {
+                            final isChecked = tempSelected.contains(acc.account.id);
+                            return GestureDetector(
+                              onTap: () {
+                                setModalState(() {
+                                  if (isChecked) {
+                                    tempSelected.remove(acc.account.id);
+                                  } else {
+                                    tempSelected.add(acc.account.id!);
+                                  }
+                                });
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 10.0),
+                                padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
+                                decoration: BoxDecoration(
+                                  color: isChecked
+                                      ? (isDarkMode ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05))
+                                      : (isDarkMode ? Colors.white.withOpacity(0.03) : Colors.black.withOpacity(0.02)),
+                                  border: Border.all(
+                                    color: isChecked
+                                        ? (isDarkMode ? Colors.white30 : Colors.black38)
+                                        : (isDarkMode ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.08)),
+                                    width: 1.0,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12.0),
+                                ),
+                                child: Row(
+                                  children: [
+                                    // Custom Checkbox
+                                    Container(
+                                      width: 20,
+                                      height: 20,
+                                      decoration: BoxDecoration(
+                                        color: isChecked
+                                            ? (isDarkMode ? Colors.white30 : Colors.black26)
+                                            : Colors.transparent,
+                                        border: Border.all(
+                                          color: isDarkMode ? Colors.white54 : Colors.black38,
+                                          width: 1.5,
+                                        ),
+                                        borderRadius: BorderRadius.circular(4.0),
+                                      ),
+                                      child: isChecked
+                                          ? const Icon(
+                                              Icons.check,
+                                              size: 14.0,
+                                              color: Colors.white,
+                                            )
+                                          : null,
+                                    ),
+                                    const SizedBox(width: 12.0),
+                                    Icon(
+                                      _getAccountIcon(acc.account.icon),
+                                      color: isDarkMode ? Colors.white70 : Colors.black87,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 12.0),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            acc.account.name,
+                                            style: TextStyle(
+                                              fontSize: 13.0,
+                                              fontWeight: isChecked ? FontWeight.bold : FontWeight.w500,
+                                              color: isDarkMode ? Colors.white : Colors.black87,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2.0),
+                                          Text(
+                                            _formatRp(acc.balance),
+                                            style: TextStyle(
+                                              fontSize: 11.0,
+                                              color: isDarkMode ? Colors.white38 : Colors.black38,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
                         ),
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              Icons.close,
-                              color: isDarkMode ? Colors.white70 : Colors.black54,
-                            ),
-                            onPressed: () => Navigator.pop(context),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
-                          const SizedBox(height: 8.0),
-                          GestureDetector(
-                            onTap: () {
-                              setModalState(() {
-                                tempSelected.clear();
-                              });
-                            },
-                            child: Text(
-                              'Reset',
-                              style: TextStyle(
-                                fontSize: 14.0,
-                                color: isDarkMode ? Colors.white54 : Colors.black54,
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20.0),
-                  ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight: MediaQuery.of(context).size.height * 0.4,
                     ),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: accounts.map((acc) {
-                          final isChecked = tempSelected.contains(acc.account.id);
-                          return GestureDetector(
-                            onTap: () {
-                              setModalState(() {
-                                if (isChecked) {
-                                  tempSelected.remove(acc.account.id);
-                                } else {
-                                  tempSelected.add(acc.account.id!);
-                                }
-                              });
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 12.0),
-                              padding: const EdgeInsets.all(16.0),
-                              decoration: BoxDecoration(
-                                color: isDarkMode
-                                    ? Colors.white.withOpacity(0.03)
-                                    : Colors.black.withOpacity(0.02),
-                                border: Border.all(
-                                  color: isDarkMode
-                                      ? Colors.white.withOpacity(0.08)
-                                      : Colors.black.withOpacity(0.08),
-                                  width: 1.0,
-                                ),
-                                borderRadius: BorderRadius.circular(16.0),
-                              ),
-                              child: Row(
-                                children: [
-                                  // Custom Checkbox
-                                  Container(
-                                    width: 22,
-                                    height: 22,
-                                    decoration: BoxDecoration(
-                                      color: isChecked
-                                          ? (isDarkMode ? Colors.white30 : Colors.black26)
-                                          : Colors.transparent,
-                                      border: Border.all(
-                                        color: isDarkMode ? Colors.white54 : Colors.black38,
-                                        width: 1.5,
-                                      ),
-                                      borderRadius: BorderRadius.circular(4.0),
-                                    ),
-                                    child: isChecked
-                                        ? const Icon(
-                                            Icons.check,
-                                            size: 16.0,
-                                            color: Colors.white,
-                                          )
-                                        : null,
-                                  ),
-                                  const SizedBox(width: 16.0),
-                                  Icon(
-                                    _getAccountIcon(acc.account.icon),
-                                    color: _getPresetColor(acc.account.color),
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 12.0),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          acc.account.name,
-                                          style: TextStyle(
-                                            fontSize: 14.0,
-                                            fontWeight: FontWeight.bold,
-                                            color: isDarkMode ? Colors.white70 : Colors.black87,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2.0),
-                                        Text(
-                                          _formatRp(acc.balance),
-                                          style: TextStyle(
-                                            fontSize: 12.0,
-                                            color: isDarkMode ? Colors.white38 : Colors.black38,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20.0),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
+                    const SizedBox(height: 16.0),
+                    ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accentTeal,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        backgroundColor: isDarkMode ? Colors.white : const Color(0xFF1E222B),
+                        foregroundColor: isDarkMode ? Colors.black : Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24.0),
+                          borderRadius: BorderRadius.circular(10.0),
                         ),
                         elevation: 0,
+                        minimumSize: const Size(double.infinity, 44),
                       ),
                       onPressed: () {
                         setState(() {
@@ -278,13 +257,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                       child: const Text(
                         'Tampilkan',
                         style: TextStyle(
-                          fontSize: 16.0,
+                          fontSize: 14.0,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           },
@@ -295,127 +274,124 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
 
   void _showCalendarFilterBottomSheet(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: isDarkMode ? const Color(0xFF131D1D) : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.0)),
-      ),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-            20.0,
-            20.0,
-            20.0,
-            MediaQuery.of(context).viewInsets.bottom + 24.0,
+        return Dialog(
+          backgroundColor: isDarkMode ? AppColors.darkModal : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24.0),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Pilih rentang waktu',
-                    style: TextStyle(
-                      fontSize: 20.0,
-                      fontWeight: FontWeight.bold,
-                      color: isDarkMode ? Colors.white : Colors.black87,
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Pilih rentang waktu',
+                      style: TextStyle(
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : Colors.black87,
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.close,
-                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                    IconButton(
+                      icon: Icon(
+                        Icons.close,
+                        color: isDarkMode ? Colors.white70 : Colors.black54,
+                        size: 20,
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                     ),
-                    onPressed: () => Navigator.pop(context),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20.0),
-              _buildCalendarOptionItem(
-                context,
-                label: 'Hari Ini',
-                icon: Icons.today_outlined,
-                isActive: _selectedDateRange == null && _timeframe == 'day',
-                onTap: () {
-                  setState(() {
-                    _selectedDateRange = null;
-                    _timeframe = 'day';
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-              _buildCalendarOptionItem(
-                context,
-                label: 'Minggu Ini',
-                icon: Icons.view_week_outlined,
-                isActive: _selectedDateRange == null && _timeframe == 'week',
-                onTap: () {
-                  setState(() {
-                    _selectedDateRange = null;
-                    _timeframe = 'week';
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-              _buildCalendarOptionItem(
-                context,
-                label: 'Bulan Ini',
-                icon: Icons.calendar_view_month_outlined,
-                isActive: _selectedDateRange == null && _timeframe == 'month',
-                onTap: () {
-                  setState(() {
-                    _selectedDateRange = null;
-                    _timeframe = 'month';
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-              _buildCalendarOptionItem(
-                context,
-                label: 'Tahun Ini',
-                icon: Icons.calendar_today_outlined,
-                isActive: _selectedDateRange == null && _timeframe == 'year',
-                onTap: () {
-                  setState(() {
-                    _selectedDateRange = null;
-                    _timeframe = 'year';
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-              _buildCalendarOptionItem(
-                context,
-                label: 'Pilih Range Tanggal',
-                icon: Icons.date_range_outlined,
-                isActive: _selectedDateRange != null,
-                onTap: () async {
-                  Navigator.pop(context); // Close bottom sheet
-                  final DateTimeRange? pickedRange = await showDateRangePicker(
-                    context: context,
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
-                    initialDateRange: _selectedDateRange,
-                    builder: (context, child) {
-                      return Theme(
-                        data: isDarkMode ? ThemeData.dark() : ThemeData.light(),
-                        child: child!,
-                      );
-                    },
-                  );
-                  if (pickedRange != null) {
+                  ],
+                ),
+                const SizedBox(height: 16.0),
+                _buildCalendarOptionItem(
+                  context,
+                  label: 'Hari Ini',
+                  icon: Icons.today_outlined,
+                  isActive: _selectedDateRange == null && _timeframe == 'day',
+                  onTap: () {
                     setState(() {
-                      _selectedDateRange = pickedRange;
+                      _selectedDateRange = null;
+                      _timeframe = 'day';
                     });
-                  }
-                },
-              ),
-            ],
+                    Navigator.pop(context);
+                  },
+                ),
+                _buildCalendarOptionItem(
+                  context,
+                  label: 'Minggu Ini',
+                  icon: Icons.view_week_outlined,
+                  isActive: _selectedDateRange == null && _timeframe == 'week',
+                  onTap: () {
+                    setState(() {
+                      _selectedDateRange = null;
+                      _timeframe = 'week';
+                    });
+                    Navigator.pop(context);
+                  },
+                ),
+                _buildCalendarOptionItem(
+                  context,
+                  label: 'Bulan Ini',
+                  icon: Icons.calendar_view_month_outlined,
+                  isActive: _selectedDateRange == null && _timeframe == 'month',
+                  onTap: () {
+                    setState(() {
+                      _selectedDateRange = null;
+                      _timeframe = 'month';
+                    });
+                    Navigator.pop(context);
+                  },
+                ),
+                _buildCalendarOptionItem(
+                  context,
+                  label: 'Tahun Ini',
+                  icon: Icons.calendar_today_outlined,
+                  isActive: _selectedDateRange == null && _timeframe == 'year',
+                  onTap: () {
+                    setState(() {
+                      _selectedDateRange = null;
+                      _timeframe = 'year';
+                    });
+                    Navigator.pop(context);
+                  },
+                ),
+                _buildCalendarOptionItem(
+                  context,
+                  label: 'Pilih Range Tanggal',
+                  icon: Icons.date_range_outlined,
+                  isActive: _selectedDateRange != null,
+                  onTap: () async {
+                    Navigator.pop(context); // Close dialog
+                    final DateTimeRange? pickedRange = await showDateRangePicker(
+                      context: context,
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                      initialDateRange: _selectedDateRange,
+                      builder: (context, child) {
+                        return Theme(
+                          data: isDarkMode ? ThemeData.dark() : ThemeData.light(),
+                          child: child!,
+                        );
+                      },
+                    );
+                    if (pickedRange != null) {
+                      setState(() {
+                        _selectedDateRange = pickedRange;
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -433,43 +409,43 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12.0),
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+        margin: const EdgeInsets.only(bottom: 10.0),
+        padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
         decoration: BoxDecoration(
           color: isActive
-              ? AppColors.accentTeal.withOpacity(0.1)
+              ? (isDarkMode ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05))
               : (isDarkMode ? Colors.white.withOpacity(0.03) : Colors.black.withOpacity(0.02)),
           border: Border.all(
             color: isActive
-                ? AppColors.accentTeal
+                ? (isDarkMode ? Colors.white30 : Colors.black38)
                 : (isDarkMode ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.08)),
             width: 1.0,
           ),
-          borderRadius: BorderRadius.circular(16.0),
+          borderRadius: BorderRadius.circular(12.0),
         ),
         child: Row(
           children: [
             Icon(
               icon,
-              color: isActive ? AppColors.accentTeal : (isDarkMode ? Colors.white70 : Colors.black54),
-              size: 20,
+              color: isDarkMode ? Colors.white70 : Colors.black54,
+              size: 18,
             ),
-            const SizedBox(width: 16.0),
+            const SizedBox(width: 12.0),
             Expanded(
               child: Text(
                 label,
                 style: TextStyle(
-                  fontSize: 14.0,
+                  fontSize: 13.0,
                   fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                  color: isActive ? AppColors.accentTeal : (isDarkMode ? Colors.white : Colors.black87),
+                  color: isDarkMode ? Colors.white : Colors.black87,
                 ),
               ),
             ),
             if (isActive)
-              const Icon(
+              Icon(
                 Icons.check,
-                color: AppColors.accentTeal,
-                size: 20,
+                color: isDarkMode ? Colors.white : Colors.black,
+                size: 18,
               ),
           ],
         ),
@@ -483,6 +459,17 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     final categoriesAsync = ref.watch(categoriesNotifierProvider);
     final accountsAsync = ref.watch(accountsNotifierProvider);
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final accounts = accountsAsync.value ?? [];
+
+    final selectedAccName = _selectedAccountIds.isEmpty
+        ? 'Semua Akun'
+        : (_selectedAccountIds.length == 1
+            ? accounts
+                .firstWhere((a) => a.account.id == _selectedAccountIds.first,
+                    orElse: () => accounts.first)
+                .account
+                .name
+            : '${_selectedAccountIds.length} Rekening');
 
     return Scaffold(
       appBar: AppBar(
@@ -501,6 +488,80 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // 1. Filters Row with rounded card selection boxes matching dashboard dialog styles
+                Row(
+                  children: [
+                    // Wallet Selector Pill
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => _showWalletFilterBottomSheet(context, accounts),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                          decoration: BoxDecoration(
+                            color: isDarkMode
+                                ? AppColors.darkCard
+                                : const Color(0xFFECEEEE),
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                selectedAccName,
+                                style: TextStyle(
+                                  fontSize: 12.0,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDarkMode ? Colors.white70 : Colors.black87,
+                                ),
+                              ),
+                              Icon(
+                                Icons.keyboard_arrow_down,
+                                size: 16.0,
+                                color: isDarkMode ? Colors.white54 : Colors.black54,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12.0),
+                    // Calendar Icon Button
+                    GestureDetector(
+                      onTap: () => _showCalendarFilterBottomSheet(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(12.0),
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? AppColors.darkCard
+                              : const Color(0xFFECEEEE),
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        child: Icon(
+                          Icons.calendar_month_outlined,
+                          size: 18.0,
+                          color: isDarkMode ? Colors.white70 : Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (_selectedDateRange != null) ...[
+                  const SizedBox(height: 10.0),
+                  Center(
+                    child: InputChip(
+                      label: Text(
+                        'Rentang: ${DateFormat('dd MMM yyyy').format(_selectedDateRange!.start)} - ${DateFormat('dd MMM yyyy').format(_selectedDateRange!.end)}',
+                        style: const TextStyle(fontSize: 11.5),
+                      ),
+                      onDeleted: () {
+                        setState(() {
+                          _selectedDateRange = null;
+                        });
+                      },
+                      deleteIcon: const Icon(Icons.close, size: 14),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16.0),
 
 
                 // 2. Data Rendering
@@ -766,15 +827,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                     final sortedAllocation = allocationByCategory.entries.toList()
                       ..sort((a, b) => b.value.compareTo(a.value));
 
-                    final selectedAccName = _selectedAccountIds.isEmpty
-                        ? 'Semua Akun'
-                        : (_selectedAccountIds.length == 1
-                            ? accounts
-                                .firstWhere((a) => a.account.id == _selectedAccountIds.first,
-                                    orElse: () => accounts.first)
-                                .account
-                                .name
-                            : '${_selectedAccountIds.length} Rekening');
+
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
