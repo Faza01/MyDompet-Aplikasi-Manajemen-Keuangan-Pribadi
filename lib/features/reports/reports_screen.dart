@@ -842,19 +842,18 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                             touchTooltipData: BarTouchTooltipData(
                                               fitInsideHorizontally: true,
                                               fitInsideVertically: true,
-                                              getTooltipColor: (_) => isDarkMode
-                                                  ? const Color(0xFF1E222B)
-                                                  : const Color(0xFFECEEEE),
+                                              getTooltipColor: (group) =>
+                                                  group.x == 0
+                                                      ? const Color(0xFF10B981)
+                                                      : const Color(0xFFEF4444), // Green for Pemasukan, Red for Pengeluaran
                                               tooltipBorderRadius:
                                                   BorderRadius.circular(8),
                                               getTooltipItem: (group, groupIndex,
                                                   rod, rodIndex) {
                                                 return BarTooltipItem(
                                                   _formatRp(rod.toY),
-                                                  TextStyle(
-                                                    color: isDarkMode
-                                                      ? Colors.white
-                                                      : Colors.black87,
+                                                  const TextStyle(
+                                                    color: Colors.white, // white text stands out on green/red bg
                                                     fontWeight: FontWeight.bold,
                                                     fontSize: 11,
                                                   ),
@@ -1007,9 +1006,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                                   touchTooltipData: BarTouchTooltipData(
                                                     fitInsideHorizontally: true,
                                                     fitInsideVertically: true,
-                                                    getTooltipColor: (_) => isDarkMode
-                                                        ? const Color(0xFF1E222B)
-                                                        : const Color(0xFF004D4D),
+                                                    getTooltipColor: (group) {
+                                                      // Dynamic tooltip color: Green if Pemasukan is higher, Red if Pengeluaran is higher
+                                                      final income = group.barRods[0].toY;
+                                                      final expense = group.barRods[1].toY;
+                                                      if (income > expense) {
+                                                        return const Color(0xFF10B981);
+                                                      } else {
+                                                        return const Color(0xFFEF4444);
+                                                      }
+                                                    },
                                                     tooltipBorderRadius:
                                                         BorderRadius.circular(8),
                                                     getTooltipItem: (group,
@@ -1017,7 +1023,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                                       return BarTooltipItem(
                                                         _formatRp(rod.toY),
                                                         const TextStyle(
-                                                            color: Colors.white,
+                                                            color: Colors.white, // white text stands out on green/red bg
                                                             fontWeight:
                                                                 FontWeight.bold,
                                                             fontSize: 11),
