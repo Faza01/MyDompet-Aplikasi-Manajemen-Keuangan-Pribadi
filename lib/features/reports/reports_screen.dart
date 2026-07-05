@@ -692,177 +692,152 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                 const SizedBox(height: 16.0),
 
                                 // Totals side-by-side
-                                Builder(
-                                  builder: (context) {
-                                    final isIncomeActive = _showAllocationChart && _allocationType == 'income';
-                                    final isExpenseActive = _showAllocationChart && _allocationType == 'expense';
+                                 Builder(
+                                   builder: (context) {
+                                     final isIncomeActive = _showAllocationChart && _allocationType == 'income';
+                                     final isExpenseActive = _showAllocationChart && _allocationType == 'expense';
 
-                                    return Row(
-                                      children: [
-                                        Expanded(
-                                          child: Material(
-                                            color: Colors.transparent,
-                                            child: InkWell(
-                                              onTap: () {
-                                                setState(() {
-                                                  if (_showAllocationChart && _allocationType == 'income') {
-                                                    _showAllocationChart = false;
-                                                  } else {
-                                                    _showAllocationChart = true;
-                                                    _allocationType = 'income';
-                                                  }
-                                                });
-                                              },
-                                              borderRadius: BorderRadius.circular(14.0),
-                                              child: AnimatedContainer(
-                                                duration: const Duration(milliseconds: 200),
-                                                padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
-                                                decoration: BoxDecoration(
-                                                  color: isIncomeActive
-                                                      ? AppColors.accentTeal.withOpacity(0.08)
-                                                      : Colors.transparent,
-                                                  borderRadius: BorderRadius.circular(14.0),
-                                                  border: Border.all(
-                                                    color: isIncomeActive
-                                                        ? AppColors.accentTeal.withOpacity(0.24)
-                                                        : Colors.transparent,
-                                                    width: 1.5,
-                                                  ),
-                                                ),
-                                                child: Column(
-                                                  children: [
-                                                    Row(
-                                                      mainAxisAlignment: MainAxisAlignment.center,
-                                                      children: [
-                                                        Container(
-                                                          width: 8,
-                                                          height: 8,
-                                                          decoration: const BoxDecoration(
-                                                            color: AppColors.income,
-                                                            shape: BoxShape.circle,
-                                                          ),
-                                                        ),
-                                                        const SizedBox(width: 6),
-                                                        Text(
-                                                          'Pemasukan',
-                                                          style: TextStyle(
-                                                            fontSize: 12.0,
-                                                            fontWeight: isIncomeActive ? FontWeight.bold : FontWeight.normal,
-                                                            color: isDarkMode
-                                                                ? Colors.white70
-                                                                : Colors.black54,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    const SizedBox(height: 4),
-                                                    Text(
-                                                      _formatRp(totalIncome),
-                                                      style: TextStyle(
-                                                        fontSize: 15.0,
-                                                        fontWeight: FontWeight.bold,
-                                                        color: isIncomeActive
-                                                            ? AppColors.income
-                                                            : (isDarkMode
-                                                                ? Colors.white
-                                                                : Colors.black87),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        if (!isIncomeActive && !isExpenseActive)
-                                          Container(
-                                            height: 30,
-                                            width: 1,
-                                            color: isDarkMode
-                                                ? Colors.white24
-                                                : Colors.black12,
-                                          )
-                                        else
-                                          const SizedBox(width: 8.0),
-                                        Expanded(
-                                          child: Material(
-                                            color: Colors.transparent,
-                                            child: InkWell(
-                                              onTap: () {
-                                                setState(() {
-                                                  if (_showAllocationChart && _allocationType == 'expense') {
-                                                    _showAllocationChart = false;
-                                                  } else {
-                                                    _showAllocationChart = true;
-                                                    _allocationType = 'expense';
-                                                  }
-                                                });
-                                              },
-                                              borderRadius: BorderRadius.circular(14.0),
-                                              child: AnimatedContainer(
-                                                duration: const Duration(milliseconds: 200),
-                                                padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
-                                                decoration: BoxDecoration(
-                                                  color: isExpenseActive
-                                                      ? AppColors.expense.withOpacity(0.08)
-                                                      : Colors.transparent,
-                                                  borderRadius: BorderRadius.circular(14.0),
-                                                  border: Border.all(
-                                                    color: isExpenseActive
-                                                        ? AppColors.expense.withOpacity(0.24)
-                                                        : Colors.transparent,
-                                                    width: 1.5,
-                                                  ),
-                                                ),
-                                                child: Column(
-                                                  children: [
-                                                    Row(
-                                                      mainAxisAlignment: MainAxisAlignment.center,
-                                                      children: [
-                                                        Container(
-                                                          width: 8,
-                                                          height: 8,
-                                                          decoration: const BoxDecoration(
-                                                            color: AppColors.expense,
-                                                            shape: BoxShape.circle,
-                                                          ),
-                                                        ),
-                                                        const SizedBox(width: 6),
-                                                        Text(
-                                                          'Pengeluaran',
-                                                          style: TextStyle(
-                                                            fontSize: 12.0,
-                                                            fontWeight: isExpenseActive ? FontWeight.bold : FontWeight.normal,
-                                                            color: isDarkMode
-                                                                ? Colors.white70
-                                                                : Colors.black54,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    const SizedBox(height: 4),
-                                                    Text(
-                                                      _formatRp(totalExpense),
-                                                      style: TextStyle(
-                                                        fontSize: 15.0,
-                                                        fontWeight: FontWeight.bold,
-                                                        color: isExpenseActive
-                                                            ? AppColors.expense
-                                                            : (isDarkMode
-                                                                ? Colors.white
-                                                                : Colors.black87),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                ),
+                                     return Container(
+                                       padding: const EdgeInsets.all(4.0),
+                                       decoration: BoxDecoration(
+                                         color: isDarkMode
+                                             ? AppColors.darkCard
+                                             : const Color(0xFFECEEEE),
+                                         borderRadius: BorderRadius.circular(14.0),
+                                       ),
+                                       child: Row(
+                                         children: [
+                                           Expanded(
+                                             child: GestureDetector(
+                                               onTap: () {
+                                                 setState(() {
+                                                   if (isIncomeActive) {
+                                                      _showAllocationChart = false;
+                                                   } else {
+                                                      _showAllocationChart = true;
+                                                      _allocationType = 'income';
+                                                   }
+                                                 });
+                                               },
+                                               child: AnimatedContainer(
+                                                 duration: const Duration(milliseconds: 150),
+                                                 padding: const EdgeInsets.symmetric(vertical: 10.0),
+                                                 decoration: BoxDecoration(
+                                                   color: isIncomeActive
+                                                       ? const Color(0xFF2C2C2C)
+                                                       : Colors.transparent,
+                                                   borderRadius: BorderRadius.circular(12.0),
+                                                 ),
+                                                 child: Column(
+                                                   children: [
+                                                     Row(
+                                                       mainAxisAlignment: MainAxisAlignment.center,
+                                                       children: [
+                                                         Container(
+                                                           width: 8,
+                                                           height: 8,
+                                                           decoration: const BoxDecoration(
+                                                             color: AppColors.income,
+                                                             shape: BoxShape.circle,
+                                                           ),
+                                                         ),
+                                                         const SizedBox(width: 6),
+                                                         Text(
+                                                           'Pemasukan',
+                                                           style: TextStyle(
+                                                             fontSize: 11.5,
+                                                             fontWeight: isIncomeActive ? FontWeight.bold : FontWeight.normal,
+                                                             color: isIncomeActive
+                                                                 ? Colors.white
+                                                                 : (isDarkMode ? Colors.grey[400] : Colors.grey[600]),
+                                                           ),
+                                                         ),
+                                                       ],
+                                                     ),
+                                                     const SizedBox(height: 4),
+                                                     Text(
+                                                       _formatRp(totalIncome),
+                                                       style: TextStyle(
+                                                         fontSize: 14.0,
+                                                         fontWeight: FontWeight.bold,
+                                                         color: isIncomeActive
+                                                             ? Colors.white
+                                                             : AppColors.income,
+                                                       ),
+                                                     ),
+                                                   ],
+                                                 ),
+                                               ),
+                                             ),
+                                           ),
+                                           Expanded(
+                                             child: GestureDetector(
+                                               onTap: () {
+                                                 setState(() {
+                                                   if (isExpenseActive) {
+                                                      _showAllocationChart = false;
+                                                   } else {
+                                                      _showAllocationChart = true;
+                                                      _allocationType = 'expense';
+                                                   }
+                                                 });
+                                               },
+                                               child: AnimatedContainer(
+                                                 duration: const Duration(milliseconds: 150),
+                                                 padding: const EdgeInsets.symmetric(vertical: 10.0),
+                                                 decoration: BoxDecoration(
+                                                   color: isExpenseActive
+                                                       ? const Color(0xFF2C2C2C)
+                                                       : Colors.transparent,
+                                                   borderRadius: BorderRadius.circular(12.0),
+                                                 ),
+                                                 child: Column(
+                                                   children: [
+                                                     Row(
+                                                       mainAxisAlignment: MainAxisAlignment.center,
+                                                       children: [
+                                                         Container(
+                                                           width: 8,
+                                                           height: 8,
+                                                           decoration: const BoxDecoration(
+                                                             color: AppColors.expense,
+                                                             shape: BoxShape.circle,
+                                                           ),
+                                                         ),
+                                                         const SizedBox(width: 6),
+                                                         Text(
+                                                           'Pengeluaran',
+                                                           style: TextStyle(
+                                                             fontSize: 11.5,
+                                                             fontWeight: isExpenseActive ? FontWeight.bold : FontWeight.normal,
+                                                             color: isExpenseActive
+                                                                 ? Colors.white
+                                                                 : (isDarkMode ? Colors.grey[400] : Colors.grey[600]),
+                                                           ),
+                                                         ),
+                                                       ],
+                                                     ),
+                                                     const SizedBox(height: 4),
+                                                     Text(
+                                                       _formatRp(totalExpense),
+                                                       style: TextStyle(
+                                                         fontSize: 14.0,
+                                                         fontWeight: FontWeight.bold,
+                                                         color: isExpenseActive
+                                                             ? Colors.white
+                                                             : AppColors.expense,
+                                                       ),
+                                                     ),
+                                                   ],
+                                                 ),
+                                               ),
+                                             ),
+                                           ),
+                                         ],
+                                       ),
+                                     );
+                                   },
+                                 ),
                                 const SizedBox(height: 14.0),
 
                                 // Net Difference (Selisih)
@@ -1305,20 +1280,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                                     name: 'Lain-lain',
                                                     type: _allocationType));
                                             final catColor = cat.color;
-                                            final pct = totalForAllocation > 0
-                                                ? (amt / totalForAllocation) * 100
-                                                : 0.0;
+
 
                                             return PieChartSectionData(
                                               color: catColor,
                                               value: amt,
-                                              title: '${pct.toStringAsFixed(0)}%',
+                                              title: '',
                                               radius: 40,
-                                              titleStyle: const TextStyle(
-                                                fontSize: 11.0,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white,
-                                              ),
                                             );
                                           }).toList(),
                                         ),
@@ -1443,10 +1411,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                                 children: [
                                                   Text(
                                                     '${pct.toStringAsFixed(1)}%',
-                                                    style: const TextStyle(
+                                                    style: TextStyle(
                                                       fontSize: 12.0,
                                                       fontWeight: FontWeight.bold,
-                                                      color: Colors.grey,
+                                                      color: isDarkMode
+                                                          ? Colors.white
+                                                          : Colors.black87,
                                                     ),
                                                   ),
                                                   const SizedBox(width: 8.0),
