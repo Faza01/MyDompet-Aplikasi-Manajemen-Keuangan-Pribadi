@@ -368,13 +368,13 @@ class HomeScreen extends ConsumerWidget {
                                   Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFEF4444)
+                                      color: const Color(0xFFDC2626)
                                           .withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(10.0),
                                     ),
                                     child: const Icon(
                                       Icons.trending_down_outlined,
-                                      color: Color(0xFFEF4444),
+                                      color: Color(0xFFDC2626),
                                       size: 22.0,
                                     ),
                                   ),
@@ -446,13 +446,13 @@ class HomeScreen extends ConsumerWidget {
                                   Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF10B981)
+                                      color: const Color(0xFF0D9488)
                                           .withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(10.0),
                                     ),
                                     child: const Icon(
                                       Icons.payments_outlined,
-                                      color: Color(0xFF10B981),
+                                      color: Color(0xFF0D9488),
                                       size: 22.0,
                                     ),
                                   ),
@@ -801,8 +801,8 @@ class HomeScreen extends ConsumerWidget {
                                                               fontSize: 13.0,
                                                               fontWeight: FontWeight.bold,
                                                               color: tx.type == 'income'
-                                                                  ? const Color(0xFF10B981)
-                                                                  : const Color(0xFFEF4444),
+                                                                  ? const Color(0xFF0D9488)
+                                                                  : const Color(0xFFDC2626),
                                                             ),
                                                           ),
                                                         ],
@@ -894,7 +894,7 @@ class HomeScreen extends ConsumerWidget {
                     children: [
                       Container(
                         width: 5.0,
-                        color: type == 'expense' ? Colors.redAccent : const Color(0xFF10B981),
+                        color: type == 'expense' ? Colors.redAccent : const Color(0xFF0D9488),
                       ),
                       Expanded(
                         child: Padding(
@@ -939,7 +939,7 @@ class HomeScreen extends ConsumerWidget {
                                     child: _buildCustomTypeChip(
                                       title: 'Pemasukan',
                                       isActive: type == 'income',
-                                      activeColor: const Color(0xFF10B981),
+                                      activeColor: const Color(0xFF0D9488),
                                       onTap: () => setState(() => type = 'income'),
                                       isDarkMode: isDarkMode,
                                     ),

@@ -90,13 +90,13 @@ class CategoryDetailScreen extends StatelessWidget {
                       CircleAvatar(
                         radius: 28,
                         backgroundColor: category.type == 'income'
-                            ? const Color(0xFF10B981).withOpacity(0.12)
-                            : const Color(0xFFEF4444).withOpacity(0.12),
+                            ? const Color(0xFF0D9488).withOpacity(0.12)
+                            : const Color(0xFFDC2626).withOpacity(0.12),
                         child: Icon(
                           _getCategoryIcon(category.icon),
                           color: category.type == 'income'
-                              ? const Color(0xFF10B981)
-                              : const Color(0xFFEF4444),
+                              ? const Color(0xFF0D9488)
+                              : const Color(0xFFDC2626),
                           size: 28,
                         ),
                       ),
@@ -112,8 +112,8 @@ class CategoryDetailScreen extends StatelessWidget {
                           fontSize: 22.0,
                           fontWeight: FontWeight.bold,
                           color: category.type == 'income'
-                              ? const Color(0xFF10B981)
-                              : const Color(0xFFEF4444),
+                              ? const Color(0xFF0D9488)
+                              : const Color(0xFFDC2626),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -188,8 +188,8 @@ class CategoryDetailScreen extends StatelessWidget {
                                   fontSize: 13.0,
                                   fontWeight: FontWeight.bold,
                                   color: tx.type == 'income'
-                                      ? const Color(0xFF10B981)
-                                      : const Color(0xFFEF4444),
+                                      ? const Color(0xFF0D9488)
+                                      : const Color(0xFFDC2626),
                                 ),
                               ),
                             ),

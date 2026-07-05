@@ -65,7 +65,7 @@ class BudgetingScreen extends ConsumerWidget {
                 Color progressColor =
                     Theme.of(context).colorScheme.primary; // Core Ledger Teal
                 if (prog.percentage >= 1.0) {
-                  progressColor = const Color(0xFFEF4444); // Coral Red
+                  progressColor = const Color(0xFFDC2626); // Coral Red
                 } else if (prog.percentage >= 0.75) {
                   progressColor = Colors.amber;
                 }

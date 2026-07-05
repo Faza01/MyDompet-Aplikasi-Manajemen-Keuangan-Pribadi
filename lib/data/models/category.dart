@@ -17,26 +17,32 @@ class Category {
 
   Color get color {
     switch (icon) {
+      // Income Family (nuansa Teal, sesuai brand)
       case 'work':
-        return const Color(0xFF2A735B); // Muted Green for Gaji
+        return const Color(0xFF0D9488); // Teal — Gaji
       case 'card_giftcard':
-        return const Color(0xFF2C736B); // Muted Teal for Bonus
+        return const Color(0xFF14B8A6); // Teal Light — Bonus
       case 'download':
-        return const Color(0xFF297481); // Muted Cyan for Terima Transfer
+        return const Color(0xFF2C7A94); // Cyan — Terima Transfer
+      case 'add_circle':
+        return const Color(0xFF6B7280); // Grey — Lain-lain (Masuk)
+      // Expense Family (variasi hangat & netral, selaras Orange brand)
       case 'restaurant':
-        return const Color(0xFF967131); // Amber for Makanan
+        return const Color(0xFFB8722E); // Orange — Makanan
       case 'directions_car':
-        return const Color(0xFF3B69B3); // Blue for Transportasi
+        return const Color(0xFF3B69B3); // Blue — Transportasi
       case 'shopping_bag':
-        return const Color(0xFFAE4277); // Pink for Belanja
+        return const Color(0xFFAE4277); // Pink — Belanja
       case 'receipt_long':
-        return const Color(0xFFAF4040); // Muted Red for Tagihan
+        return const Color(0xFFDC2626); // Red — Tagihan
       case 'sports_esports':
-        return const Color(0xFF6C47C0); // Muted Purple for Hiburan
+        return const Color(0xFF6C47C0); // Purple — Hiburan
       case 'swap_horiz':
-        return const Color(0xFF4C46B9); // Indigo for Transfer
+        return const Color(0xFF4C46B9); // Indigo — Transfer
+      case 'remove_circle':
+        return const Color(0xFF6B7280); // Grey — Lain-lain (Keluar)
       default:
-        return const Color(0xFF7A7F88); // Grey for Lain-lain
+        return const Color(0xFF6B7280); // Grey — fallback
     }
   }
 

@@ -312,7 +312,7 @@ class _QuickInputDialogState extends ConsumerState<QuickInputDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('$savedCount transaksi berhasil disimpan ke dompet!'),
-          backgroundColor: const Color(0xFF10B981),
+          backgroundColor: const Color(0xFF0D9488),
         ),
       );
     }
@@ -824,7 +824,7 @@ class _QuickInputDialogState extends ConsumerState<QuickInputDialog> {
                                                 children: [
                                                   Container(
                                                     width: 4.0,
-                                                    color: tx.type == 'expense' ? Colors.redAccent : const Color(0xFF10B981),
+                                                    color: tx.type == 'expense' ? Colors.redAccent : const Color(0xFF0D9488),
                                                   ),
                                                   Expanded(
                                                     child: Padding(
@@ -875,7 +875,7 @@ class _QuickInputDialogState extends ConsumerState<QuickInputDialog> {
                                                               _buildTypeToggleChip(
                                                                 title: 'Pemasukan',
                                                                 isActive: tx.type == 'income',
-                                                                activeColor: const Color(0xFF10B981),
+                                                                activeColor: const Color(0xFF0D9488),
                                                                 onTap: message.isSaved
                                                                     ? null
                                                                     : () => setState(() => _toggleType(tx, 'income', categories)),
@@ -1103,19 +1103,19 @@ class _QuickInputDialogState extends ConsumerState<QuickInputDialog> {
                                           Container(
                                             padding: const EdgeInsets.symmetric(vertical: 6.0),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFF10B981).withOpacity(0.1),
+                                              color: const Color(0xFF0D9488).withOpacity(0.1),
                                               borderRadius: BorderRadius.circular(10.0),
-                                              border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
+                                              border: Border.all(color: const Color(0xFF0D9488).withOpacity(0.3)),
                                             ),
                                             child: const Row(
                                               mainAxisAlignment: MainAxisAlignment.center,
                                               children: [
-                                                Icon(Icons.check_circle_outlined, color: Color(0xFF10B981), size: 14),
+                                                Icon(Icons.check_circle_outlined, color: Color(0xFF0D9488), size: 14),
                                                 SizedBox(width: 6.0),
                                                 Text(
                                                   'Tersimpan ke Dompet',
                                                   style: TextStyle(
-                                                    color: Color(0xFF10B981),
+                                                    color: Color(0xFF0D9488),
                                                     fontSize: 11.5,
                                                     fontWeight: FontWeight.bold,
                                                   ),

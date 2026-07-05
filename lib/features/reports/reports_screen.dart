@@ -703,7 +703,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                                 width: 8,
                                                 height: 8,
                                                 decoration: const BoxDecoration(
-                                                  color: Color(0xFF10B981),
+                                                  color: Color(0xFF0D9488),
                                                   shape: BoxShape.circle,
                                                 ),
                                               ),
@@ -751,7 +751,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                                 width: 8,
                                                 height: 8,
                                                 decoration: const BoxDecoration(
-                                                  color: Color(0xFFEF4444),
+                                                  color: Color(0xFFDC2626),
                                                   shape: BoxShape.circle,
                                                 ),
                                               ),
@@ -806,8 +806,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             color: totalIncome - totalExpense >= 0
-                                                ? const Color(0xFF10B981)
-                                                : const Color(0xFFEF4444),
+                                                ? const Color(0xFF0D9488)
+                                                : const Color(0xFFDC2626),
                                           ),
                                         ),
                                       ],
@@ -836,8 +836,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                               fitInsideVertically: true,
                                               getTooltipColor: (group) =>
                                                   group.x == 0
-                                                      ? const Color(0xFF10B981)
-                                                      : const Color(0xFFEF4444), // Green for Pemasukan, Red for Pengeluaran
+                                                      ? const Color(0xFF0D9488)
+                                                      : const Color(0xFFDC2626), // Green for Pemasukan, Red for Pengeluaran
                                               tooltipBorderRadius:
                                                   BorderRadius.circular(8),
                                               getTooltipItem: (group, groupIndex,
@@ -1003,9 +1003,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                                       final income = group.barRods[0].toY;
                                                       final expense = group.barRods[1].toY;
                                                       if (income > expense) {
-                                                        return const Color(0xFF10B981);
+                                                        return const Color(0xFF0D9488);
                                                       } else {
-                                                        return const Color(0xFFEF4444);
+                                                        return const Color(0xFFDC2626);
                                                       }
                                                     },
                                                     tooltipBorderRadius:
@@ -1172,7 +1172,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                               vertical: 10.0),
                                           decoration: BoxDecoration(
                                             color: _allocationType == 'income'
-                                                ? const Color(0xFF10B981)
+                                                ? const Color(0xFF0D9488)
                                                     .withOpacity(0.12)
                                                 : (isDarkMode
                                                     ? Colors.white
@@ -1183,7 +1183,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                                 BorderRadius.circular(12.0), // match border radius box/filter boxes
                                             border: Border.all(
                                               color: _allocationType == 'income'
-                                                  ? const Color(0xFF10B981)
+                                                  ? const Color(0xFF0D9488)
                                                   : Colors.transparent,
                                               width: 1.5,
                                             ),
@@ -1195,7 +1195,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                               fontSize: 13.0,
                                               fontWeight: FontWeight.bold,
                                               color: _allocationType == 'income'
-                                                  ? const Color(0xFF10B981)
+                                                  ? const Color(0xFF0D9488)
                                                   : (isDarkMode
                                                       ? Colors.white60
                                                       : Colors.black54),
@@ -1214,7 +1214,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                               vertical: 10.0),
                                           decoration: BoxDecoration(
                                             color: _allocationType == 'expense'
-                                                ? const Color(0xFFEF4444)
+                                                ? const Color(0xFFDC2626)
                                                     .withOpacity(0.12)
                                                 : (isDarkMode
                                                     ? Colors.white
@@ -1225,7 +1225,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                                 BorderRadius.circular(12.0), // match border radius box/filter boxes
                                             border: Border.all(
                                               color: _allocationType == 'expense'
-                                                  ? const Color(0xFFEF4444)
+                                                  ? const Color(0xFFDC2626)
                                                   : Colors.transparent,
                                               width: 1.5,
                                             ),
@@ -1238,7 +1238,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                               fontWeight: FontWeight.bold,
                                               color: _allocationType ==
                                                       'expense'
-                                                  ? const Color(0xFFEF4444)
+                                                  ? const Color(0xFFDC2626)
                                                   : (isDarkMode
                                                       ? Colors.white60
                                                       : Colors.black54),
