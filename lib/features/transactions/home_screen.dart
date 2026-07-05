@@ -901,6 +901,7 @@ class HomeScreen extends ConsumerWidget {
 
   void _showEditDialog(BuildContext context, WidgetRef ref, TransactionModel tx,
       List<Category> categories) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final noteController = TextEditingController(text: tx.note);
     final amountController =
         TextEditingController(text: tx.amount.toStringAsFixed(0));
@@ -953,21 +954,52 @@ class HomeScreen extends ConsumerWidget {
                     const SizedBox(height: 12),
                     DropdownButtonFormField<Category>(
                       initialValue: selectedCat,
+                      dropdownColor: isDarkMode
+                          ? const Color(0xFF1E222B)
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(12.0),
                       decoration: const InputDecoration(labelText: 'Kategori'),
                       items: filteredCats.map((c) {
-                        return DropdownMenuItem(value: c, child: Text(c.name));
+                        return DropdownMenuItem(
+                          value: c,
+                          child: Row(
+                            children: [
+                              Icon(
+                                _getCategoryIcon(c.icon),
+                                size: 18.0,
+                                color: isDarkMode ? Colors.white70 : Colors.black54,
+                              ),
+                              const SizedBox(width: 8.0),
+                              Text(c.name),
+                            ],
+                          ),
+                        );
                       }).toList(),
                       onChanged: (val) => setState(() => selectedCat = val),
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<int>(
                       initialValue: selectedAccId,
+                      dropdownColor: isDarkMode
+                          ? const Color(0xFF1E222B)
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(12.0),
                       decoration:
                           const InputDecoration(labelText: 'Dompet / Akun'),
                       items: accounts.map((a) {
                         return DropdownMenuItem<int>(
                           value: a.account.id,
-                          child: Text(a.account.name),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _getAccountIcon(a.account.icon),
+                                size: 18.0,
+                                color: isDarkMode ? Colors.white70 : Colors.black54,
+                              ),
+                              const SizedBox(width: 8.0),
+                              Text(a.account.name),
+                            ],
+                          ),
                         );
                       }).toList(),
                       onChanged: (val) => setState(() => selectedAccId = val),
