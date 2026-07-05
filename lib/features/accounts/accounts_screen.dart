@@ -52,6 +52,36 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
   final _formatter =
       NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
+  List<Color> _generatePremiumGradient(Color baseColor) {
+    final hsl = HSLColor.fromColor(baseColor);
+    final darkColor = hsl.withLightness((hsl.lightness * 0.45).clamp(0.0, 1.0)).toColor();
+    final lightColor = hsl.withLightness((hsl.lightness + (1.0 - hsl.lightness) * 0.35).clamp(0.0, 1.0)).toColor();
+    return [darkColor, baseColor, lightColor];
+  }
+
+  InputDecoration _buildFieldDecoration(String labelText, bool isDarkMode, {String? prefixText}) {
+    return InputDecoration(
+      labelText: labelText,
+      labelStyle: TextStyle(
+        fontSize: 13.0,
+        color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+      ),
+      filled: true,
+      fillColor: isDarkMode ? AppColors.darkElevated : const Color(0xFFF3F4F6),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.0),
+        borderSide: BorderSide.none,
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+      prefixText: prefixText,
+      prefixStyle: TextStyle(
+        fontSize: 14.0,
+        fontWeight: FontWeight.bold,
+        color: isDarkMode ? Colors.white : Colors.black87,
+      ),
+    );
+  }
+
   // Transfer Form State
   int? _fromAccountId;
   int? _toAccountId;
@@ -153,8 +183,8 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
                         childAspectRatio: 1.4,
                       ),
                       itemCount: accounts.length + 1,
@@ -166,27 +196,40 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
                               color: isDarkMode
                                   ? const Color(0xFF1E222B)
                                   : Colors.white,
-                              borderRadius: BorderRadius.circular(16.0),
+                              borderRadius: BorderRadius.circular(20.0),
                               border: Border.all(
                                 color: isDarkMode
-                                    ? Colors.white.withValues(alpha: 0.04)
-                                    : Colors.black.withValues(alpha: 0.05),
+                                    ? Colors.white.withValues(alpha: 0.08)
+                                    : Colors.black.withValues(alpha: 0.08),
+                                width: 1.5,
                               ),
                             ),
                             child: InkWell(
-                              borderRadius: BorderRadius.circular(16.0),
+                              borderRadius: BorderRadius.circular(20.0),
                               onTap: () => _showAddAccountDialog(context),
-                              child: const Column(
+                              child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.add_circle_outline,
-                                      size: 28.0, color: Color(0xFF004D4D)),
-                                  SizedBox(height: 6.0),
+                                  Container(
+                                    padding: const EdgeInsets.all(10.0),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.accentTeal.withValues(alpha: 0.08),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.add,
+                                      size: 24.0,
+                                      color: AppColors.accentTeal,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8.0),
                                   Text(
                                     'Tambah Akun',
                                     style: TextStyle(
-                                        fontSize: 12.0,
-                                        fontWeight: FontWeight.bold),
+                                      fontSize: 12.0,
+                                      fontWeight: FontWeight.bold,
+                                      color: isDarkMode ? Colors.white70 : Colors.black87,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -196,76 +239,149 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
 
                         final accWithBal = accounts[index];
                         final acc = accWithBal.account;
+                        final baseColor = _parseCustomColor(acc.color) ?? (isDarkMode ? const Color(0xFF1E222B) : Colors.white);
+                        final bool hasGradient = _parseCustomColor(acc.color) != null;
 
                         return Container(
-                          padding: const EdgeInsets.all(12.0),
+                          padding: const EdgeInsets.all(16.0),
                           decoration: BoxDecoration(
-                            color: isDarkMode
-                                ? const Color(0xFF1E222B)
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(16.0),
+                            gradient: hasGradient
+                                ? LinearGradient(
+                                    colors: _generatePremiumGradient(baseColor),
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  )
+                                : null,
+                            color: hasGradient
+                                ? null
+                                : (isDarkMode ? const Color(0xFF1E222B) : Colors.white),
+                            borderRadius: BorderRadius.circular(20.0),
                             border: Border.all(
-                              color: isDarkMode
-                                  ? Colors.white.withValues(alpha: 0.04)
-                                  : Colors.black.withValues(alpha: 0.05),
+                              color: hasGradient
+                                  ? Colors.white.withValues(alpha: 0.08)
+                                  : (isDarkMode
+                                      ? Colors.white.withValues(alpha: 0.04)
+                                      : Colors.black.withValues(alpha: 0.05)),
+                              width: 1.0,
                             ),
+                            boxShadow: hasGradient
+                                ? [
+                                    BoxShadow(
+                                      color: baseColor.withValues(alpha: 0.15),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    )
+                                  ]
+                                : null,
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          child: Stack(
                             children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                              if (hasGradient)
+                                Positioned(
+                                  right: -10,
+                                  bottom: -10,
+                                  child: Opacity(
+                                    opacity: 0.08,
+                                    child: Icon(
+                                      _getAccountIcon(acc.icon),
+                                      size: 72.0,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Icon(_getAccountIcon(acc.icon),
-                                      color: isDarkMode
-                                          ? Colors.white
-                                          : Colors.black,
-                                      size: 20),
                                   Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      IconButton(
-                                        icon: Icon(Icons.edit_outlined,
-                                            size: 14,
-                                            color: isDarkMode
-                                                ? Colors.white70
-                                                : Colors.black87),
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(),
-                                        onPressed: () => _showEditAccountDialog(
-                                            context, acc),
+                                      Container(
+                                        padding: const EdgeInsets.all(6.0),
+                                        decoration: BoxDecoration(
+                                          color: hasGradient
+                                              ? Colors.white.withValues(alpha: 0.15)
+                                              : (isDarkMode
+                                                  ? Colors.white.withValues(alpha: 0.06)
+                                                  : Colors.black.withValues(alpha: 0.04)),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          _getAccountIcon(acc.icon),
+                                          color: hasGradient
+                                              ? Colors.white
+                                              : (isDarkMode ? Colors.white : Colors.black87),
+                                          size: 16.0,
+                                        ),
                                       ),
-                                      const SizedBox(width: 8),
-                                      IconButton(
-                                        icon: const Icon(Icons.delete_outline,
-                                            size: 14, color: Colors.redAccent),
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(),
-                                        onPressed: () =>
-                                            _confirmDeleteAccount(context, acc),
+                                      Row(
+                                        children: [
+                                          GestureDetector(
+                                            onTap: () => _showEditAccountDialog(context, acc),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(6.0),
+                                              decoration: BoxDecoration(
+                                                color: hasGradient
+                                                    ? Colors.white.withValues(alpha: 0.12)
+                                                    : Colors.transparent,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: Icon(
+                                                Icons.edit_outlined,
+                                                size: 13.0,
+                                                color: hasGradient
+                                                    ? Colors.white.withValues(alpha: 0.95)
+                                                    : (isDarkMode ? Colors.white70 : Colors.black87),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6.0),
+                                          GestureDetector(
+                                            onTap: () => _confirmDeleteAccount(context, acc),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(6.0),
+                                              decoration: BoxDecoration(
+                                                color: hasGradient
+                                                    ? Colors.white.withValues(alpha: 0.12)
+                                                    : Colors.transparent,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: Icon(
+                                                Icons.delete_outline,
+                                                size: 13.0,
+                                                color: hasGradient
+                                                    ? Colors.white.withValues(alpha: 0.95)
+                                                    : Colors.redAccent,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
-                                ],
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    acc.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                        fontSize: 12.0,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(height: 2.0),
-                                  Text(
-                                    _formatter.format(accWithBal.balance),
-                                    style: const TextStyle(
-                                        fontSize: 13.0,
-                                        fontWeight: FontWeight.bold),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        acc.name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 12.0,
+                                          fontWeight: FontWeight.bold,
+                                          color: hasGradient ? Colors.white : (isDarkMode ? Colors.white : Colors.black87),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2.0),
+                                      Text(
+                                        _formatter.format(accWithBal.balance),
+                                        style: TextStyle(
+                                          fontSize: 14.0,
+                                          fontWeight: FontWeight.bold,
+                                          color: hasGradient ? Colors.white : (isDarkMode ? Colors.white : Colors.black87),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
@@ -301,35 +417,52 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Row(
+                        Row(
                           children: [
-                            Icon(Icons.swap_horiz, color: AppColors.catTransfer),
-                            SizedBox(width: 8),
-                            Text(
+                            Container(
+                              padding: const EdgeInsets.all(8.0),
+                              decoration: BoxDecoration(
+                                color: AppColors.accentTeal.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              child: const Icon(
+                                Icons.swap_horiz,
+                                color: AppColors.accentTeal,
+                                size: 18.0,
+                              ),
+                            ),
+                            const SizedBox(width: 10.0),
+                            const Text(
                               'Pindah Dana / Transfer',
                               style: TextStyle(
                                   fontSize: 14.0, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16.0),
+                        const SizedBox(height: 20.0),
                         accountsAsync.when(
                           data: (accounts) {
                             return Column(
                               children: [
                                 // Source Account selector
                                 DropdownButtonFormField<int>(
-                                  initialValue: _fromAccountId,
-                                  decoration: InputDecoration(
-                                    labelText: 'Dari Akun / Dompet',
-                                    border: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(12)),
+                                  value: _fromAccountId,
+                                  dropdownColor: isDarkMode ? AppColors.darkModal : Colors.white,
+                                  icon: const Icon(Icons.keyboard_arrow_down, size: 20.0),
+                                  style: TextStyle(
+                                    fontSize: 14.0,
+                                    color: isDarkMode ? Colors.white : Colors.black87,
                                   ),
+                                  decoration: _buildFieldDecoration('Dari Akun / Dompet', isDarkMode),
                                   items: accounts.map((acc) {
                                     return DropdownMenuItem(
                                       value: acc.account.id,
-                                      child: Text(acc.account.name),
+                                      child: Text(
+                                        acc.account.name,
+                                        style: TextStyle(
+                                          color: isDarkMode ? Colors.white : Colors.black87,
+                                        ),
+                                      ),
                                     );
                                   }).toList(),
                                   onChanged: (val) {
@@ -341,17 +474,23 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
                                 const SizedBox(height: 12.0),
                                 // Destination Account selector
                                 DropdownButtonFormField<int>(
-                                  initialValue: _toAccountId,
-                                  decoration: InputDecoration(
-                                    labelText: 'Ke Akun / Dompet',
-                                    border: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(12)),
+                                  value: _toAccountId,
+                                  dropdownColor: isDarkMode ? AppColors.darkModal : Colors.white,
+                                  icon: const Icon(Icons.keyboard_arrow_down, size: 20.0),
+                                  style: TextStyle(
+                                    fontSize: 14.0,
+                                    color: isDarkMode ? Colors.white : Colors.black87,
                                   ),
+                                  decoration: _buildFieldDecoration('Ke Akun / Dompet', isDarkMode),
                                   items: accounts.map((acc) {
                                     return DropdownMenuItem(
                                       value: acc.account.id,
-                                      child: Text(acc.account.name),
+                                      child: Text(
+                                        acc.account.name,
+                                        style: TextStyle(
+                                          color: isDarkMode ? Colors.white : Colors.black87,
+                                        ),
+                                      ),
                                     );
                                   }).toList(),
                                   onChanged: (val) {
@@ -371,32 +510,28 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
                         TextField(
                           controller: _amountController,
                           keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: 'Nominal Transfer',
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            prefixText: 'Rp ',
+                          decoration: _buildFieldDecoration('Nominal Transfer', isDarkMode, prefixText: 'Rp '),
+                          style: TextStyle(
+                            fontSize: 14.0,
+                            color: isDarkMode ? Colors.white : Colors.black87,
                           ),
                         ),
                         const SizedBox(height: 12.0),
                         // Note Field
                         TextField(
                           controller: _noteController,
-                          decoration: InputDecoration(
-                            labelText: 'Catatan (Opsional)',
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12)),
+                          decoration: _buildFieldDecoration('Catatan (Opsional)', isDarkMode),
+                          style: TextStyle(
+                            fontSize: 14.0,
+                            color: isDarkMode ? Colors.white : Colors.black87,
                           ),
                         ),
-                        const SizedBox(height: 20.0),
+                        const SizedBox(height: 24.0),
                         ElevatedButton(
                           onPressed: _executeTransfer,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: isDarkMode
-                                ? Colors.white
-                                : const Color(0xFF2C2C2C),
-                            foregroundColor:
-                                isDarkMode ? Colors.black : Colors.white,
+                            backgroundColor: isDarkMode ? Colors.white : AppColors.primaryBlack,
+                            foregroundColor: isDarkMode ? Colors.black : Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14.0),
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12.0)),
