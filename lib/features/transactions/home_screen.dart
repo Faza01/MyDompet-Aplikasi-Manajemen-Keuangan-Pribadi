@@ -753,21 +753,20 @@ class HomeScreen extends ConsumerWidget {
                                                       padding: const EdgeInsets.symmetric(vertical: 12.0),
                                                       child: Row(
                                                         children: [
-                                                          Container(
-                                                            width: 38.0,
-                                                            height: 38.0,
-                                                            decoration: BoxDecoration(
-                                                              color: isDarkMode
-                                                                  ? const Color(0xFF131D1D)
-                                                                  : const Color(0xFFECEEEE),
-                                                              shape: BoxShape.circle,
+                                                            Container(
+                                                              width: 38.0,
+                                                              height: 38.0,
+                                                              decoration: BoxDecoration(
+                                                                color: category.color
+                                                                    .withOpacity(0.12),
+                                                                shape: BoxShape.circle,
+                                                              ),
+                                                              child: Icon(
+                                                                _getCategoryIcon(category.icon),
+                                                                color: category.color,
+                                                                size: 18.0,
+                                                              ),
                                                             ),
-                                                            child: Icon(
-                                                              _getCategoryIcon(category.icon),
-                                                              color: isDarkMode ? Colors.white : Colors.black,
-                                                              size: 18.0,
-                                                            ),
-                                                          ),
                                                           const SizedBox(width: 12.0),
                                                           Expanded(
                                                             child: Column(

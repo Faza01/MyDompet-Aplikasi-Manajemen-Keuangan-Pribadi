@@ -59,6 +59,7 @@ class BudgetingScreen extends ConsumerWidget {
               itemBuilder: (context, index) {
                 final prog = progressList[index];
                 final hasBudget = prog.budget != null;
+                final catColor = prog.category.color;
 
                 // Color based on budget percentage
                 Color progressColor =
@@ -98,15 +99,12 @@ class BudgetingScreen extends ConsumerWidget {
                                 width: 40.0,
                                 height: 40.0,
                                 decoration: BoxDecoration(
-                                  color: isDarkMode
-                                      ? const Color(0xFF131D1D)
-                                      : const Color(0xFFECEEEE),
+                                  color: catColor.withOpacity(0.12),
                                   borderRadius: BorderRadius.circular(12.0),
                                 ),
                                 child: Icon(
                                   _getCategoryIcon(prog.category.icon),
-                                  color:
-                                      isDarkMode ? Colors.white : Colors.black,
+                                  color: catColor,
                                   size: 20.0,
                                 ),
                               ),

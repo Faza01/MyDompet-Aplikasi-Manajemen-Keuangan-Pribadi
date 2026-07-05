@@ -22,16 +22,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   DateTimeRange? _selectedDateRange; // null means no custom date range
   String _allocationType = 'expense'; // 'income' | 'expense'
 
-  final List<Color> _chartColors = [
-    const Color(0xFFEF4444), // Coral Red
-    const Color(0xFF3B82F6), // Blue
-    const Color(0xFF10B981), // Emerald
-    const Color(0xFFF59E0B), // Amber
-    const Color(0xFF8B5CF6), // Purple
-    const Color(0xFFEC4899), // Pink
-    const Color(0xFF14B8A6), // Teal
-    Colors.grey,
-  ];
 
   String _formatRp(double val) {
     return NumberFormat.currency(
@@ -1277,8 +1267,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                               orElse: () => Category(
                                                   name: 'Lain-lain',
                                                   type: _allocationType));
-                                          final index = categories.indexOf(cat) %
-                                              _chartColors.length;
+                                          final catColor = cat.color;
 
                                           final pct = totalForAllocation > 0
                                               ? (amt / totalForAllocation) * 100
@@ -1293,7 +1282,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                               fontWeight: FontWeight.bold,
                                               color: Colors.white,
                                             ),
-                                            color: _chartColors[index],
+                                            color: catColor,
                                           );
                                         }).toList(),
                                       ),
@@ -1324,8 +1313,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                         orElse: () => Category(
                                             name: 'Lain-lain',
                                             type: _allocationType));
-                                    final index = categories.indexOf(cat) %
-                                        _chartColors.length;
+                                    final catColor = cat.color;
 
                                     final pct = totalForAllocation > 0
                                         ? (amt / totalForAllocation) * 100
@@ -1371,13 +1359,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                               width: 36.0,
                                               height: 36.0,
                                               decoration: BoxDecoration(
-                                                color: _chartColors[index]
+                                                color: catColor
                                                     .withOpacity(0.12),
                                                 shape: BoxShape.circle,
                                               ),
                                               child: Icon(
                                                 _getCategoryIcon(cat.icon),
-                                                color: _chartColors[index],
+                                                color: catColor,
                                                 size: 18.0,
                                               ),
                                             ),
