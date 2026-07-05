@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../core/nlp/nlp_parser.dart';
 import '../../data/models/category.dart';
@@ -82,6 +81,9 @@ class _QuickInputDialogState extends ConsumerState<QuickInputDialog> {
   // Chat message history
   final List<ChatMessage> _messages = [];
 
+  // Edit message variables
+  int? _editingMessageIndex;
+  TextEditingController? _editMessageController;
 
   @override
   void initState() {
@@ -106,6 +108,7 @@ class _QuickInputDialogState extends ConsumerState<QuickInputDialog> {
     _inputController.dispose();
     _inputFocusNode.dispose();
     _scrollController.dispose();
+    _editMessageController?.dispose();
     for (final msg in _messages) {
       msg.dispose();
     }
@@ -335,6 +338,127 @@ class _QuickInputDialogState extends ConsumerState<QuickInputDialog> {
     });
   }
 
+  int _getLastUserMessageIndex() {
+    for (int i = _messages.length - 1; i >= 0; i--) {
+      if (_messages[i].isUser) return i;
+    }
+    return -1;
+  }
+
+  bool _canEditLastMessage() {
+    final lastUserIdx = _getLastUserMessageIndex();
+    if (lastUserIdx == -1) return false;
+    
+    // Find the next message after lastUserIdx (which should be the bot response)
+    if (lastUserIdx + 1 < _messages.length) {
+      final nextMsg = _messages[lastUserIdx + 1];
+      if (!nextMsg.isUser && nextMsg.isSaved) {
+        return false; // Already saved, cannot edit anymore
+      }
+    }
+    return true;
+  }
+
+  void _saveEditedMessage(int index) {
+    final newText = _editMessageController?.text.trim() ?? '';
+    if (newText.isEmpty) return;
+
+    setState(() {
+      // 1. Update the user message text
+      _messages[index] = ChatMessage(
+        text: newText,
+        isUser: true,
+        timestamp: DateTime.now(),
+      );
+
+      // 2. Remove the subsequent bot message if it exists
+      if (index + 1 < _messages.length) {
+        final nextMsg = _messages[index + 1];
+        if (!nextMsg.isUser) {
+          nextMsg.dispose(); // clean up controllers!
+          _messages.removeAt(index + 1);
+        }
+      }
+
+      _editingMessageIndex = null;
+      _editMessageController?.dispose();
+      _editMessageController = null;
+    });
+
+    // 3. Re-parse and generate a new bot message response
+    final categories = ref.read(categoriesNotifierProvider).value ?? [];
+    final keywords = ref.read(keywordsNotifierProvider).value ?? [];
+    final accounts = ref.read(accountsNotifierProvider).value ?? [];
+
+    final expenseDefault = categories.firstWhere(
+      (c) => c.name.toLowerCase().contains('lain') && c.type == 'expense',
+      orElse: () => categories.firstWhere(
+        (c) => c.type == 'expense',
+        orElse: () => Category(id: 99, name: 'Lain-lain', type: 'expense'),
+      ),
+    );
+    final incomeDefault = categories.firstWhere(
+      (c) => c.name.toLowerCase().contains('lain') && c.type == 'income',
+      orElse: () => categories.firstWhere(
+        (c) => c.type == 'income',
+        orElse: () => Category(id: 98, name: 'Lain-lain (Masuk)', type: 'income'),
+      ),
+    );
+
+    final parsedResults = NlpParser.parseMultiple(
+      newText,
+      categories: categories,
+      keywords: keywords,
+      defaultExpenseCategory: expenseDefault,
+      defaultIncomeCategory: incomeDefault,
+    );
+
+    final List<EditableParsedTransaction> editableTxs = [];
+    final activeAccountId = ref.read(selectedAccountIdProvider);
+    AccountWithBalance? defaultAccount;
+    final activeAccountList = accounts.where((a) => a.account.id == activeAccountId).toList();
+    if (activeAccountList.isNotEmpty) {
+      defaultAccount = activeAccountList.first;
+    } else if (accounts.isNotEmpty) {
+      defaultAccount = accounts.first;
+    }
+
+    for (final res in parsedResults) {
+      final detectedAccount = _detectAccount(res.rawInput, accounts) ?? defaultAccount;
+      editableTxs.add(
+        EditableParsedTransaction(
+          rawInput: res.rawInput,
+          note: res.note,
+          amount: res.amount,
+          type: res.type,
+          category: res.category,
+          account: detectedAccount,
+        ),
+      );
+    }
+
+    String botResponseText;
+    if (editableTxs.isEmpty || (editableTxs.length == 1 && editableTxs.first.amountController.text.isEmpty)) {
+      botResponseText = 'Maaf, saya tidak menemukan angka transaksi yang jelas dalam pesan Anda. Silakan tulis nominal transaksi secara jelas seperti: "beli makan 15rb" atau "gaji 3jt".';
+    } else {
+      botResponseText = 'Berikut adalah transaksi yang berhasil saya analisis. Silakan periksa kembali detailnya di bawah ini sebelum menyimpan:';
+    }
+
+    final botMsg = ChatMessage(
+      text: botResponseText,
+      isUser: false,
+      timestamp: DateTime.now(),
+      parsedTransactions: (editableTxs.isEmpty || (editableTxs.length == 1 && editableTxs.first.amountController.text.isEmpty)) ? null : editableTxs,
+    );
+
+    setState(() {
+      // Insert the new bot response right after the edited user message
+      _messages.insert(index + 1, botMsg);
+    });
+
+    _scrollToBottom();
+  }
+
   // Smart Account Detection based on keywords in text
   AccountWithBalance? _detectAccount(String text, List<AccountWithBalance> accounts) {
     final lowerText = text.toLowerCase();
@@ -555,6 +679,8 @@ class _QuickInputDialogState extends ConsumerState<QuickInputDialog> {
                 itemCount: _messages.length,
                 itemBuilder: (context, index) {
                   final message = _messages[index];
+                  final isEditingThis = _editingMessageIndex == index;
+
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12.0),
                     child: Row(
@@ -587,230 +713,303 @@ class _QuickInputDialogState extends ConsumerState<QuickInputDialog> {
                                 width: 1,
                               ),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  message.text,
-                                  style: TextStyle(
-                                    fontSize: 13.0,
-                                    color: message.isUser
-                                        ? Colors.white
-                                        : (isDarkMode ? Colors.white : Colors.black87),
-                                    height: 1.4,
-                                  ),
-                                ),
-                                if (message.parsedTransactions != null) ...[
-                                  ...message.parsedTransactions!.asMap().entries.map((entry) {
-                                    final idx = entry.key;
-                                    final tx = entry.value;
-                                    return Container(
-                                      margin: const EdgeInsets.only(top: 10.0),
-                                      padding: const EdgeInsets.all(12.0),
-                                      decoration: BoxDecoration(
-                                        color: isDarkMode ? const Color(0xFF1E222B) : Colors.white,
-                                        borderRadius: BorderRadius.circular(12.0),
-                                        border: Border.all(
-                                          color: isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.08),
-                                          width: 1,
+                            child: isEditingThis
+                                ? Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      TextField(
+                                        controller: _editMessageController,
+                                        maxLines: null,
+                                        style: const TextStyle(fontSize: 13.0, color: Colors.white),
+                                        decoration: const InputDecoration(
+                                          isDense: true,
+                                          contentPadding: EdgeInsets.symmetric(vertical: 8),
+                                          border: InputBorder.none,
                                         ),
                                       ),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                      const Divider(color: Colors.white24, height: 16),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.end,
                                         children: [
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                'Transaksi #${idx + 1}',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12.0,
-                                                  color: isDarkMode ? Colors.white70 : Colors.black87,
-                                                ),
-                                              ),
-                                              if (!message.isSaved)
-                                                IconButton(
-                                                  icon: const Icon(Icons.delete_outline_outlined, size: 16, color: Colors.redAccent),
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      message.parsedTransactions!.removeAt(idx);
-                                                      if (message.parsedTransactions!.isEmpty) {
-                                                        message.parsedTransactions = null;
-                                                      }
-                                                    });
-                                                  },
-                                                  constraints: const BoxConstraints(),
-                                                  padding: EdgeInsets.zero,
-                                                ),
-                                            ],
+                                          TextButton(
+                                            onPressed: () {
+                                              setState(() {
+                                                _editingMessageIndex = null;
+                                                _editMessageController?.dispose();
+                                                _editMessageController = null;
+                                              });
+                                            },
+                                            child: const Text('Batal', style: TextStyle(color: Colors.white70, fontSize: 12.0)),
                                           ),
-                                          const SizedBox(height: 8.0),
-                                          Row(
-                                            children: [
-                                              _buildTypeToggleChip(
-                                                title: 'Pengeluaran',
-                                                isActive: tx.type == 'expense',
-                                                activeColor: Colors.redAccent,
-                                                onTap: message.isSaved
-                                                    ? null
-                                                    : () => setState(() => _toggleType(tx, 'expense', categories)),
-                                                isDarkMode: isDarkMode,
-                                              ),
-                                              const SizedBox(width: 8.0),
-                                              _buildTypeToggleChip(
-                                                title: 'Pemasukan',
-                                                isActive: tx.type == 'income',
-                                                activeColor: const Color(0xFF10B981),
-                                                onTap: message.isSaved
-                                                    ? null
-                                                    : () => setState(() => _toggleType(tx, 'income', categories)),
-                                                isDarkMode: isDarkMode,
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 10.0),
-                                          Row(
-                                            children: [
-                                              Expanded(
-                                                flex: 2,
-                                                child: TextField(
-                                                  controller: tx.noteController,
-                                                  enabled: !message.isSaved,
-                                                  style: TextStyle(fontSize: 11.5, color: isDarkMode ? Colors.white : Colors.black87),
-                                                  decoration: InputDecoration(
-                                                    labelText: 'Catatan',
-                                                    labelStyle: const TextStyle(fontSize: 10.0),
-                                                    isDense: true,
-                                                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-                                                  ),
-                                                ),
-                                              ),
-                                              const SizedBox(width: 6.0),
-                                              Expanded(
-                                                flex: 1,
-                                                child: TextField(
-                                                  controller: tx.amountController,
-                                                  enabled: !message.isSaved,
-                                                  keyboardType: TextInputType.number,
-                                                  style: TextStyle(fontSize: 11.5, color: isDarkMode ? Colors.white : Colors.black87),
-                                                  decoration: InputDecoration(
-                                                    labelText: 'Nominal',
-                                                    labelStyle: const TextStyle(fontSize: 10.0),
-                                                    isDense: true,
-                                                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 8.0),
-                                          Row(
-                                            children: [
-                                              Expanded(
-                                                child: DropdownButtonFormField<Category>(
-                                                  value: tx.category,
-                                                  disabledHint: tx.category != null ? Text(tx.category!.name, style: const TextStyle(fontSize: 11.0)) : null,
-                                                  items: categories
-                                                      .where((c) => c.type == tx.type)
-                                                      .map((c) => DropdownMenuItem(
-                                                            value: c,
-                                                            child: Text(c.name, style: const TextStyle(fontSize: 11.0)),
-                                                          ))
-                                                      .toList(),
-                                                  onChanged: message.isSaved
-                                                      ? null
-                                                      : (val) => setState(() => tx.category = val),
-                                                  decoration: InputDecoration(
-                                                    labelText: 'Kategori',
-                                                    labelStyle: const TextStyle(fontSize: 9.5),
-                                                    isDense: true,
-                                                    contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-                                                  ),
-                                                ),
-                                              ),
-                                              const SizedBox(width: 6.0),
-                                              Expanded(
-                                                child: DropdownButtonFormField<AccountWithBalance>(
-                                                  value: accounts.any((a) => a.account.id == tx.account?.account.id)
-                                                      ? accounts.firstWhere((a) => a.account.id == tx.account?.account.id)
-                                                      : null,
-                                                  disabledHint: tx.account != null ? Text(tx.account!.account.name, style: const TextStyle(fontSize: 11.0)) : null,
-                                                  items: accounts
-                                                      .map((a) => DropdownMenuItem(
-                                                            value: a,
-                                                            child: Text(a.account.name, style: const TextStyle(fontSize: 11.0)),
-                                                          ))
-                                                      .toList(),
-                                                  onChanged: message.isSaved
-                                                      ? null
-                                                      : (val) => setState(() => tx.account = val),
-                                                  decoration: InputDecoration(
-                                                    labelText: 'Dompet',
-                                                    labelStyle: const TextStyle(fontSize: 9.5),
-                                                    isDense: true,
-                                                    contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
+                                          const SizedBox(width: 8.0),
+                                          ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.white,
+                                              foregroundColor: Colors.black,
+                                              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+                                              minimumSize: const Size(60, 28),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                                            ),
+                                            onPressed: () => _saveEditedMessage(index),
+                                            child: const Text('Simpan', style: TextStyle(fontSize: 12.0, fontWeight: FontWeight.bold)),
                                           ),
                                         ],
-                                      ),
-                                    );
-                                  }),
-                                  const SizedBox(height: 12.0),
-                                  if (!message.isSaved)
-                                    ElevatedButton.icon(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: isDarkMode ? Colors.white : const Color(0xFF1E222B),
-                                        foregroundColor: isDarkMode ? Colors.black : Colors.white,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-                                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                        minimumSize: const Size(double.infinity, 32),
-                                      ),
-                                      icon: const Icon(Icons.check_circle_outline_outlined, size: 14),
-                                      label: const Text('Simpan ke Dompet', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
-                                      onPressed: () {
-                                        for (final tx in message.parsedTransactions!) {
-                                          final amtText = tx.amountController.text.trim();
-                                          tx.amount = double.tryParse(amtText) ?? 0.0;
-                                          tx.note = tx.noteController.text.trim();
-                                        }
-                                        _saveMessageTransactions(message);
-                                      },
-                                    )
-                                  else
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(vertical: 6.0),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF10B981).withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(10.0),
-                                        border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
-                                      ),
-                                      child: const Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                      )
+                                    ],
+                                  )
+                                : Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(Icons.check_circle_outlined, color: Color(0xFF10B981), size: 14),
-                                          SizedBox(width: 6.0),
-                                          Text(
-                                            'Tersimpan ke Dompet',
-                                            style: TextStyle(
-                                              color: Color(0xFF10B981),
-                                              fontSize: 11.5,
-                                              fontWeight: FontWeight.bold,
+                                          Flexible(
+                                            child: Text(
+                                              message.text,
+                                              style: TextStyle(
+                                                fontSize: 13.0,
+                                                color: message.isUser
+                                                    ? Colors.white
+                                                    : (isDarkMode ? Colors.white : Colors.black87),
+                                                height: 1.4,
+                                              ),
                                             ),
                                           ),
+                                          if (message.isUser && index == _getLastUserMessageIndex() && _canEditLastMessage()) ...[
+                                            const SizedBox(width: 8.0),
+                                            GestureDetector(
+                                              onTap: () {
+                                                setState(() {
+                                                  _editingMessageIndex = index;
+                                                  _editMessageController = TextEditingController(text: message.text);
+                                                });
+                                              },
+                                              child: const Padding(
+                                                padding: EdgeInsets.only(bottom: 2.0),
+                                                child: Icon(
+                                                  Icons.edit_outlined,
+                                                  size: 14,
+                                                  color: Colors.white70,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ],
                                       ),
-                                    )
-                                ]
-                              ],
-                            ),
+                                      if (message.parsedTransactions != null) ...[
+                                        ...message.parsedTransactions!.asMap().entries.map((entry) {
+                                          final idx = entry.key;
+                                          final tx = entry.value;
+                                          return Container(
+                                            margin: const EdgeInsets.only(top: 10.0),
+                                            padding: const EdgeInsets.all(12.0),
+                                            decoration: BoxDecoration(
+                                              color: isDarkMode ? const Color(0xFF1E222B) : Colors.white,
+                                              borderRadius: BorderRadius.circular(12.0),
+                                              border: Border.all(
+                                                color: isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.08),
+                                                width: 1,
+                                              ),
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                                              children: [
+                                                Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  children: [
+                                                    Text(
+                                                      'Transaksi #${idx + 1}',
+                                                      style: TextStyle(
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 12.0,
+                                                        color: isDarkMode ? Colors.white70 : Colors.black87,
+                                                      ),
+                                                    ),
+                                                    if (!message.isSaved)
+                                                      IconButton(
+                                                        icon: const Icon(Icons.delete_outline_outlined, size: 16, color: Colors.redAccent),
+                                                        onPressed: () {
+                                                          setState(() {
+                                                            message.parsedTransactions!.removeAt(idx);
+                                                            if (message.parsedTransactions!.isEmpty) {
+                                                              message.parsedTransactions = null;
+                                                            }
+                                                          });
+                                                        },
+                                                        constraints: const BoxConstraints(),
+                                                        padding: EdgeInsets.zero,
+                                                      ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 8.0),
+                                                Row(
+                                                  children: [
+                                                    _buildTypeToggleChip(
+                                                      title: 'Pengeluaran',
+                                                      isActive: tx.type == 'expense',
+                                                      activeColor: Colors.redAccent,
+                                                      onTap: message.isSaved
+                                                          ? null
+                                                          : () => setState(() => _toggleType(tx, 'expense', categories)),
+                                                      isDarkMode: isDarkMode,
+                                                    ),
+                                                    const SizedBox(width: 8.0),
+                                                    _buildTypeToggleChip(
+                                                      title: 'Pemasukan',
+                                                      isActive: tx.type == 'income',
+                                                      activeColor: const Color(0xFF10B981),
+                                                      onTap: message.isSaved
+                                                          ? null
+                                                          : () => setState(() => _toggleType(tx, 'income', categories)),
+                                                      isDarkMode: isDarkMode,
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 10.0),
+                                                Row(
+                                                  children: [
+                                                    Expanded(
+                                                      flex: 2,
+                                                      child: TextField(
+                                                        controller: tx.noteController,
+                                                        enabled: !message.isSaved,
+                                                        style: TextStyle(fontSize: 11.5, color: isDarkMode ? Colors.white : Colors.black87),
+                                                        decoration: InputDecoration(
+                                                          labelText: 'Catatan',
+                                                          labelStyle: const TextStyle(fontSize: 10.0),
+                                                          isDense: true,
+                                                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 6.0),
+                                                    Expanded(
+                                                      flex: 1,
+                                                      child: TextField(
+                                                        controller: tx.amountController,
+                                                        enabled: !message.isSaved,
+                                                        keyboardType: TextInputType.number,
+                                                        style: TextStyle(fontSize: 11.5, color: isDarkMode ? Colors.white : Colors.black87),
+                                                        decoration: InputDecoration(
+                                                          labelText: 'Nominal',
+                                                          labelStyle: const TextStyle(fontSize: 10.0),
+                                                          isDense: true,
+                                                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 8.0),
+                                                Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: DropdownButtonFormField<Category>(
+                                                        value: tx.category,
+                                                        disabledHint: tx.category != null ? Text(tx.category!.name, style: const TextStyle(fontSize: 11.0)) : null,
+                                                        items: categories
+                                                            .where((c) => c.type == tx.type)
+                                                            .map((c) => DropdownMenuItem(
+                                                                  value: c,
+                                                                  child: Text(c.name, style: const TextStyle(fontSize: 11.0)),
+                                                                ))
+                                                            .toList(),
+                                                        onChanged: message.isSaved
+                                                            ? null
+                                                            : (val) => setState(() => tx.category = val),
+                                                        decoration: InputDecoration(
+                                                          labelText: 'Kategori',
+                                                          labelStyle: const TextStyle(fontSize: 9.5),
+                                                          isDense: true,
+                                                          contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 6.0),
+                                                    Expanded(
+                                                      child: DropdownButtonFormField<AccountWithBalance>(
+                                                        value: accounts.any((a) => a.account.id == tx.account?.account.id)
+                                                            ? accounts.firstWhere((a) => a.account.id == tx.account?.account.id)
+                                                            : null,
+                                                        disabledHint: tx.account != null ? Text(tx.account!.account.name, style: const TextStyle(fontSize: 11.0)) : null,
+                                                        items: accounts
+                                                            .map((a) => DropdownMenuItem(
+                                                                  value: a,
+                                                                  child: Text(a.account.name, style: const TextStyle(fontSize: 11.0)),
+                                                                ))
+                                                            .toList(),
+                                                        onChanged: message.isSaved
+                                                            ? null
+                                                            : (val) => setState(() => tx.account = val),
+                                                        decoration: InputDecoration(
+                                                          labelText: 'Dompet',
+                                                          labelStyle: const TextStyle(fontSize: 9.5),
+                                                          isDense: true,
+                                                          contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        }),
+                                        const SizedBox(height: 12.0),
+                                        if (!message.isSaved)
+                                          ElevatedButton.icon(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: isDarkMode ? Colors.white : const Color(0xFF1E222B),
+                                              foregroundColor: isDarkMode ? Colors.black : Colors.white,
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                              minimumSize: const Size(double.infinity, 32),
+                                            ),
+                                            icon: const Icon(Icons.check_circle_outline_outlined, size: 14),
+                                            label: const Text('Simpan ke Dompet', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                                            onPressed: () {
+                                              for (final tx in message.parsedTransactions!) {
+                                                final amtText = tx.amountController.text.trim();
+                                                tx.amount = double.tryParse(amtText) ?? 0.0;
+                                                tx.note = tx.noteController.text.trim();
+                                              }
+                                              _saveMessageTransactions(message);
+                                            },
+                                          )
+                                        else
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(vertical: 6.0),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF10B981).withOpacity(0.1),
+                                              borderRadius: BorderRadius.circular(10.0),
+                                              border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
+                                            ),
+                                            child: const Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Icon(Icons.check_circle_outlined, color: Color(0xFF10B981), size: 14),
+                                                SizedBox(width: 6.0),
+                                                Text(
+                                                  'Tersimpan ke Dompet',
+                                                  style: TextStyle(
+                                                    color: Color(0xFF10B981),
+                                                    fontSize: 11.5,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          )
+                                      ]
+                                    ],
+                                  ),
                           ),
                         ),
                       ],
