@@ -165,30 +165,32 @@ class _NlpKeywordsDialogState extends ConsumerState<NlpKeywordsDialog> {
                     return ListView(
                       physics: const BouncingScrollPhysics(),
                       children: [
-                        // Hutang section
-                        _buildSectionHeader('HUTANG (Uang Masuk)', AppColors.semanticRed),
-                        const SizedBox(height: 8),
-                        if (debts.isEmpty)
-                          const Text('Belum ada kata kunci khusus.', style: TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic))
-                        else
-                          Wrap(
-                            spacing: 6.0,
-                            runSpacing: 2.0,
-                            children: debts.map((k) => _buildKeywordChip(k)).toList(),
-                          ),
-                        const SizedBox(height: 20),
-
-                        // Piutang section
-                        _buildSectionHeader('PIUTANG (Uang Keluar)', AppColors.accentTeal),
-                        const SizedBox(height: 8),
-                        if (receivables.isEmpty)
-                          const Text('Belum ada kata kunci khusus.', style: TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic))
-                        else
-                          Wrap(
-                            spacing: 6.0,
-                            runSpacing: 2.0,
-                            children: receivables.map((k) => _buildKeywordChip(k)).toList(),
-                          ),
+                        if (_selectedType == 'debt') ...[
+                          // Hutang section
+                          _buildSectionHeader('KATA KUNCI HUTANG (Uang Masuk)', AppColors.semanticRed),
+                          const SizedBox(height: 8),
+                          if (debts.isEmpty)
+                            const Text('Belum ada kata kunci khusus.', style: TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic))
+                          else
+                            Wrap(
+                              spacing: 6.0,
+                              runSpacing: 2.0,
+                              children: debts.map((k) => _buildKeywordChip(k)).toList(),
+                            ),
+                        ],
+                        if (_selectedType == 'receivable') ...[
+                          // Piutang section
+                          _buildSectionHeader('KATA KUNCI PIUTANG (Uang Keluar)', AppColors.accentTeal),
+                          const SizedBox(height: 8),
+                          if (receivables.isEmpty)
+                            const Text('Belum ada kata kunci khusus.', style: TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic))
+                          else
+                            Wrap(
+                              spacing: 6.0,
+                              runSpacing: 2.0,
+                              children: receivables.map((k) => _buildKeywordChip(k)).toList(),
+                            ),
+                        ],
                       ],
                     );
                   },
