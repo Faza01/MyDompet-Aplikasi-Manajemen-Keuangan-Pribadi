@@ -2,6 +2,18 @@
 
 Semua perubahan penting pada proyek **MyDompet** akan dicatat di file ini.
 
+## [1.3.0] - 2026-07-09
+
+### Ditambahkan
+- **Fitur Hutang & Piutang**: Pengelolaan pinjaman komprehensif dengan dukungan pembayaran/pelunasan cicilan secara parsial (sebagian nominal) dan tanggal tenggat waktu opsional.
+- **Integrasi NLP & Asisten Chatbot**: Deteksi otomatis pernyataan pinjaman pada input cepat (NLP Parser) seperti *"hutang ke Budi 50rb"* atau *"pinjamkan ke Andi 100rb"* untuk dicatat langsung ke modul Hutang & Piutang.
+- **Pengelola Kata Kunci In-App**: Dialog pengaturan kata kunci pemicu NLP kustom langsung di dalam aplikasi (menggunakan chip interaktif) dengan filter dinamis berbasis tipe kategori aktif.
+
+### Diperbaiki
+- **Bebas Efek Kedipan (Zero Flash)**: Mengganti ChoiceChip bawaan Flutter dengan custom `GestureDetector` + `AnimatedContainer` untuk menghilangkan efek kedipan kuning (Android `InkSparkle` shader) pada halaman Hutang & Piutang dan dialog NLP.
+- **Optimasi Performa Kategori (Budgeting)**: Refaktorisasi list kata kunci kategori ke family provider `categoryKeywordsProvider` dan isolasi rebuild sub-widget `_KeywordsListWidget` (dilengkapi `RepaintBoundary`) untuk meniadakan lag/stutter saat men-scroll halaman detail anggaran.
+- **Pembersihan Repo & Dependensi**: Menghapus dependensi mati `inspire_blur` serta membersihkan berkas ekspor profil DevTools besar (~301.6 MB) dari direktori kerja.
+
 ## [1.2.0] - 2026-07-05
 
 ### Ditambahkan

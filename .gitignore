@@ -46,3 +46,7 @@ app.*.map.json
 
 # Ignore performance analysis directory
 /analyse_performance
+
+# Agentic/Superpowers planning and progress workspace
+.superpowers/
+docs/superpowers/
