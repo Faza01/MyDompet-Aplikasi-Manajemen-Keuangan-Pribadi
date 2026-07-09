@@ -2,6 +2,7 @@ class DebtModel {
   final int? id;
   final String contactName;
   final double amount;
+  final double paidAmount; // Track total paid amount
   final String type; // 'debt' | 'receivable'
   final DateTime dueDate;
   final String status; // 'pending' | 'paid'
@@ -14,6 +15,7 @@ class DebtModel {
     this.id,
     required this.contactName,
     required this.amount,
+    this.paidAmount = 0.0,
     required this.type,
     required this.dueDate,
     required this.status,
@@ -27,6 +29,7 @@ class DebtModel {
     int? id,
     String? contactName,
     double? amount,
+    double? paidAmount,
     String? type,
     DateTime? dueDate,
     String? status,
@@ -39,6 +42,7 @@ class DebtModel {
       id: id ?? this.id,
       contactName: contactName ?? this.contactName,
       amount: amount ?? this.amount,
+      paidAmount: paidAmount ?? this.paidAmount,
       type: type ?? this.type,
       dueDate: dueDate ?? this.dueDate,
       status: status ?? this.status,
@@ -69,6 +73,7 @@ class DebtModel {
       id: map['id'] as int?,
       contactName: map['contact_name'] as String,
       amount: (map['amount'] as num).toDouble(),
+      paidAmount: ((map['paid_amount'] as num?)?.toDouble()) ?? 0.0,
       type: map['type'] as String,
       dueDate: DateTime.parse(map['due_date'] as String),
       status: map['status'] as String,

@@ -514,7 +514,13 @@ class DatabaseHelper {
 
   Future<List<Map<String, dynamic>>> getAllDebts() async {
     final db = await instance.database;
-    return await db.query('debts', orderBy: 'created_at DESC');
+    return await db.rawQuery('''
+      SELECT d.*, COALESCE(SUM(r.amount), 0) as paid_amount
+      FROM debts d
+      LEFT JOIN debt_repayments r ON d.id = r.debt_id
+      GROUP BY d.id
+      ORDER BY d.created_at DESC
+    ''');
   }
 
   Future<void> deleteDebt(int id) async {
