@@ -9,6 +9,8 @@ import '../../data/models/transaction.dart';
 import '../accounts/accounts_provider.dart';
 import '../budgeting/categories_provider.dart';
 import '../transactions/transactions_provider.dart';
+import '../debts/debts_provider.dart';
+import '../../data/models/debt.dart';
 
 class EditableParsedTransaction {
   final String rawInput;
@@ -21,6 +23,11 @@ class EditableParsedTransaction {
   String note;
   DateTime dateTime;
 
+  // Debt-specific metadata
+  String? contactName;
+  String? debtType; // 'debt' | 'receivable' | null
+  DateTime? dueDate;
+
   EditableParsedTransaction({
     required this.rawInput,
     required this.note,
@@ -29,6 +36,9 @@ class EditableParsedTransaction {
     this.category,
     this.account,
     DateTime? dateTime,
+    this.contactName,
+    this.debtType,
+    this.dueDate,
   })  : dateTime = dateTime ?? DateTime.now(),
         noteController = TextEditingController(text: note),
         amountController = TextEditingController(
@@ -254,6 +264,9 @@ class _QuickInputDialogState extends ConsumerState<QuickInputDialog> {
           type: res.type,
           category: res.category,
           account: detectedAccount,
+          contactName: res.contactName,
+          debtType: res.debtType,
+          dueDate: res.dueDate,
         ),
       );
     }
@@ -283,25 +296,39 @@ class _QuickInputDialogState extends ConsumerState<QuickInputDialog> {
   void _saveMessageTransactions(ChatMessage message) {
     if (message.parsedTransactions == null || message.isSaved) return;
 
-    final notifier = ref.read(transactionsNotifierProvider.notifier);
+    final transactionsNotifier = ref.read(transactionsNotifierProvider.notifier);
+    final debtsNotifier = ref.read(debtsNotifierProvider.notifier);
     int savedCount = 0;
 
     for (final tx in message.parsedTransactions!) {
       if (tx.amount <= 0) continue;
       if (tx.account == null) continue;
 
-      final newTx = TransactionModel(
-        accountId: tx.account!.account.id!,
-        amount: tx.amount,
-        type: tx.type,
-        categoryId: tx.category?.id,
-        note: tx.note.trim().isEmpty ? 'Transaksi Tanpa Catatan' : tx.note.trim(),
-        rawInput: tx.rawInput,
-        inputMethod: 'chat',
-        createdAt: tx.dateTime,
-      );
-
-      notifier.addTransaction(newTx);
+      if (tx.debtType != null) {
+        final newDebt = DebtModel(
+          contactName: tx.contactName ?? 'Seseorang',
+          amount: tx.amount,
+          type: tx.debtType!,
+          dueDate: tx.dueDate,
+          status: 'pending',
+          note: tx.note.trim().isEmpty ? null : tx.note.trim(),
+          accountId: tx.account!.account.id!,
+          createdAt: tx.dateTime,
+        );
+        debtsNotifier.addDebt(newDebt);
+      } else {
+        final newTx = TransactionModel(
+          accountId: tx.account!.account.id!,
+          amount: tx.amount,
+          type: tx.type,
+          categoryId: tx.category?.id,
+          note: tx.note.trim().isEmpty ? 'Transaksi Tanpa Catatan' : tx.note.trim(),
+          rawInput: tx.rawInput,
+          inputMethod: 'chat',
+          createdAt: tx.dateTime,
+        );
+        transactionsNotifier.addTransaction(newTx);
+      }
       savedCount++;
     }
 
@@ -438,6 +465,9 @@ class _QuickInputDialogState extends ConsumerState<QuickInputDialog> {
           type: res.type,
           category: res.category,
           account: detectedAccount,
+          contactName: res.contactName,
+          debtType: res.debtType,
+          dueDate: res.dueDate,
         ),
       );
     }

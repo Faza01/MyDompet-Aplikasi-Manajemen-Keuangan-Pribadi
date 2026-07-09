@@ -7,6 +7,11 @@ class ParsedResult {
   final Category? category;
   final String note;
   final String rawInput;
+  
+  // Debt-specific parsed metadata
+  final String? contactName;
+  final String? debtType; // 'debt' | 'receivable' | null
+  final DateTime? dueDate;
 
   ParsedResult({
     required this.amount,
@@ -14,11 +19,14 @@ class ParsedResult {
     this.category,
     required this.note,
     required this.rawInput,
+    this.contactName,
+    this.debtType,
+    this.dueDate,
   });
 
   @override
   String toString() {
-    return 'ParsedResult(amount: $amount, type: $type, category: ${category?.name}, note: $note)';
+    return 'ParsedResult(amount: $amount, type: $type, category: ${category?.name}, note: $note, contactName: $contactName, debtType: $debtType)';
   }
 }
 
@@ -179,8 +187,69 @@ class NlpParser {
     matchedCategory ??=
         type == 'income' ? defaultIncomeCategory : defaultExpenseCategory;
 
-    // 4. Construct Note
-    // The note is the remaining text. If the remaining text is empty, we fall back to the original input.
+    // 4. Extract Debt Specific Info (Hutang & Piutang)
+    String? contactName;
+    String? debtType;
+    DateTime? dueDate;
+
+    // Detect if this is a debt or receivable transaction
+    String? matchedKeyword;
+    for (final kw in debtKeywords) {
+      if (lowercaseInput.contains(kw)) {
+        debtType = 'debt';
+        matchedKeyword = kw;
+        type = 'income'; // Kita berhutang = uang masuk
+        break;
+      }
+    }
+    if (debtType == null) {
+      for (final kw in receivableKeywords) {
+        if (lowercaseInput.contains(kw)) {
+          debtType = 'receivable';
+          matchedKeyword = kw;
+          type = 'expense'; // Kita meminjamkan = uang keluar
+          break;
+        }
+      }
+    }
+
+    if (debtType != null && matchedKeyword != null) {
+      // Extract contact name (next word after the keyword)
+      final escapedKeyword = RegExp.escape(matchedKeyword);
+      final nameReg = RegExp(
+        '$escapedKeyword\\s+([a-zA-Z0-9_]+)',
+        caseSensitive: false,
+      );
+      final match = nameReg.firstMatch(lowercaseInput);
+      if (match != null) {
+        final startIndex = match.start + matchedKeyword.length;
+        final nameSnippet = cleanInput.substring(startIndex).trim();
+        final rawName = nameSnippet.split(' ').first;
+        contactName = rawName.replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '');
+      }
+
+      // Extract optional due date
+      final dateKeywords = ['deadline', 'tenggat', 'jatuh tempo', 'sampai', 'tgl', 'tanggal'];
+      for (final dk in dateKeywords) {
+        if (lowercaseInput.contains(dk)) {
+          final escapedDk = RegExp.escape(dk);
+          final dateReg = RegExp(
+            '$escapedDk\\s+([^\\s]+(?:\\s+[^\\s]+)?)',
+            caseSensitive: false,
+          );
+          final dMatch = dateReg.firstMatch(lowercaseInput);
+          if (dMatch != null) {
+            final dateStr = dMatch.group(1)?.trim();
+            if (dateStr != null) {
+              dueDate = _parseNlpDate(dateStr);
+            }
+          }
+          break;
+        }
+      }
+    }
+
+    // 5. Construct Note
     String note = remainingText;
     if (note.isEmpty) {
       note = cleanInput;
@@ -192,7 +261,106 @@ class NlpParser {
       category: matchedCategory,
       note: note,
       rawInput: cleanInput,
+      contactName: contactName,
+      debtType: debtType,
+      dueDate: dueDate,
     );
+  }
+
+  // --- NLP Debt/Receivable Configurable Triggers ---
+  static List<String> debtKeywords = [
+    'hutang ke',
+    'utang ke',
+    'hutang dari',
+    'utang dari',
+    'pinjam dari',
+    'pinjem dari',
+    'pinjam uang dari',
+    'pinjem uang dari',
+  ];
+
+  static List<String> receivableKeywords = [
+    'pinjamkan ke',
+    'pinjemin ke',
+    'piutang ke',
+    'piutang dari',
+    'pinjamkan uang ke',
+    'utangin ke',
+    'piutang',
+    'kasih pinjam ke',
+    'kasih pinjem ke',
+  ];
+
+  static DateTime? _parseNlpDate(String text) {
+    final cleanText = text.toLowerCase().replaceAll(RegExp(r'[^a-z0-9/\-]'), ' ').trim();
+    final parts = cleanText.split(RegExp(r'\s+'));
+    if (parts.isEmpty) return null;
+
+    final now = DateTime.now();
+    int day = now.day;
+    int month = now.month;
+    int year = now.year;
+
+    // 1. Try parsing direct dd/mm/yyyy or dd/mm
+    final slashReg = RegExp(r'(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?');
+    final match = slashReg.firstMatch(cleanText);
+    if (match != null) {
+      day = int.tryParse(match.group(1) ?? '') ?? day;
+      month = int.tryParse(match.group(2) ?? '') ?? month;
+      final yrStr = match.group(3);
+      if (yrStr != null) {
+        int yr = int.tryParse(yrStr) ?? year;
+        if (yr < 100) yr += 2000;
+        year = yr;
+      }
+      return DateTime(year, month, day);
+    }
+
+    // 2. Try parsing word-based month (Indonesian)
+    final indonesianMonths = {
+      'jan': 1, 'januari': 1,
+      'feb': 2, 'februari': 2,
+      'mar': 3, 'maret': 3,
+      'apr': 4, 'april': 4,
+      'mei': 5,
+      'jun': 6, 'juni': 6,
+      'jul': 7, 'juli': 7,
+      'agu': 8, 'agustus': 8,
+      'sep': 9, 'september': 9,
+      'okt': 10, 'oktober': 10,
+      'nov': 11, 'november': 11,
+      'des': 12, 'desember': 12,
+    };
+
+    if (parts.length >= 2) {
+      final parsedDay = int.tryParse(parts[0]);
+      if (parsedDay != null) {
+        day = parsedDay;
+        final monthStr = parts[1];
+        if (indonesianMonths.containsKey(monthStr)) {
+          month = indonesianMonths[monthStr]!;
+          if (parts.length >= 3) {
+            final parsedYear = int.tryParse(parts[2]);
+            if (parsedYear != null) {
+              year = parsedYear;
+              if (year < 100) year += 2000;
+            }
+          }
+          return DateTime(year, month, day);
+        }
+      }
+    }
+
+    final parsedDay = int.tryParse(parts[0]);
+    if (parsedDay != null && parsedDay >= 1 && parsedDay <= 31) {
+      if (parsedDay < now.day) {
+        month = now.month == 12 ? 1 : now.month + 1;
+        year = now.month == 12 ? now.year + 1 : now.year;
+      }
+      return DateTime(year, month, parsedDay);
+    }
+
+    return null;
   }
 
   static _AmountMatch? _extractAmount(String text) {

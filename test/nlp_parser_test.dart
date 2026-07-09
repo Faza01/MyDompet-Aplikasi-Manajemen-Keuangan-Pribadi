@@ -247,5 +247,39 @@ void main() {
       expect(results[2].category?.name, equals('Gaji'));
       expect(results[2].note, equals('gaji bulanan'));
     });
+
+    test('Should parse debt transaction "hutang ke Budi 50rb deadline 12 juli" correctly', () {
+      final result = NlpParser.parse(
+        'hutang ke Budi 50rb deadline 12 juli',
+        categories: categories,
+        keywords: keywords,
+        defaultExpenseCategory: defaultExpense,
+        defaultIncomeCategory: defaultIncome,
+      );
+
+      expect(result.amount, equals(50000.0));
+      expect(result.type, equals('income')); // Uang masuk
+      expect(result.debtType, equals('debt'));
+      expect(result.contactName, equals('Budi'));
+      expect(result.dueDate, isNotNull);
+      expect(result.dueDate?.day, equals(12));
+      expect(result.dueDate?.month, equals(7));
+    });
+
+    test('Should parse receivable transaction "pinjamkan ke Andi 100rb" with null deadline correctly', () {
+      final result = NlpParser.parse(
+        'pinjamkan ke Andi 100rb',
+        categories: categories,
+        keywords: keywords,
+        defaultExpenseCategory: defaultExpense,
+        defaultIncomeCategory: defaultIncome,
+      );
+
+      expect(result.amount, equals(100000.0));
+      expect(result.type, equals('expense')); // Uang keluar
+      expect(result.debtType, equals('receivable'));
+      expect(result.contactName, equals('Andi'));
+      expect(result.dueDate, isNull);
+    });
   });
 }
