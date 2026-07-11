@@ -2,6 +2,11 @@
 
 Semua perubahan penting pada proyek **MyDompet** akan dicatat di file ini.
 
+## [1.4.1] - 2026-07-11
+
+### Diperbaiki
+- **Impor & Ekspor Data (Backup)**: Memperbaiki bug impor/ekspor data di mana tabel data `debts` (hutang/piutang), `debt_repayments` (cicilan/pembayaran), dan `nlp_debt_keywords` (kata kunci NLP kustom) tidak ikut dicadangkan dan dipulihkan. Urutan pembersihan database juga disesuaikan untuk menghapus tabel anak terlebih dahulu demi mematuhi batasan foreign key constraint.
+
 ## [1.4.0] - 2026-07-10
 
 ### Ditambahkan

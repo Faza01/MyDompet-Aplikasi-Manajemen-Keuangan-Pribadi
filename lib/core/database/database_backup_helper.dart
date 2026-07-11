@@ -9,9 +9,16 @@ class DatabaseBackupHelper {
 
     final List<Map<String, dynamic>> accounts = await db.query('accounts');
     final List<Map<String, dynamic>> categories = await db.query('categories');
-    final List<Map<String, dynamic>> keywords = await db.query('category_keywords');
-    final List<Map<String, dynamic>> transactions = await db.query('transactions');
+    final List<Map<String, dynamic>> keywords =
+        await db.query('category_keywords');
+    final List<Map<String, dynamic>> transactions =
+        await db.query('transactions');
     final List<Map<String, dynamic>> budgets = await db.query('budgets');
+    final List<Map<String, dynamic>> debts = await db.query('debts');
+    final List<Map<String, dynamic>> repayments =
+        await db.query('debt_repayments');
+    final List<Map<String, dynamic>> nlpKeywords =
+        await db.query('nlp_debt_keywords');
 
     final Map<String, dynamic> backup = {
       'version': 1,
@@ -21,6 +28,9 @@ class DatabaseBackupHelper {
       'category_keywords': keywords,
       'transactions': transactions,
       'budgets': budgets,
+      'debts': debts,
+      'debt_repayments': repayments,
+      'nlp_debt_keywords': nlpKeywords,
     };
 
     return const JsonEncoder.withIndent('  ').convert(backup);
@@ -29,8 +39,9 @@ class DatabaseBackupHelper {
   /// Exports the JSON string and shares it as a file using the OS Share sheet.
   static Future<void> exportAndShare() async {
     final jsonStr = await exportToJson();
-    final fileName = 'keuangan_backup_${DateTime.now().millisecondsSinceEpoch}.json';
-    
+    final fileName =
+        'keuangan_backup_${DateTime.now().millisecondsSinceEpoch}.json';
+
     // Delegate to conditional helper to handle sharing in both Web and Native environments
     await io_share.shareBackupFile(jsonStr, fileName);
   }
@@ -50,12 +61,15 @@ class DatabaseBackupHelper {
       final db = await DatabaseHelper.instance.database;
 
       await db.transaction((txn) async {
-        // Clear all tables
+        // Clear all tables (anak tabel pertama untuk mencegah pelanggaran foreign key)
+        await txn.delete('debt_repayments');
+        await txn.delete('debts');
         await txn.delete('budgets');
         await txn.delete('transactions');
         await txn.delete('category_keywords');
         await txn.delete('categories');
         await txn.delete('accounts');
+        await txn.delete('nlp_debt_keywords');
 
         // Restore Accounts
         for (final item in data['accounts']) {
@@ -83,6 +97,27 @@ class DatabaseBackupHelper {
         if (data.containsKey('budgets')) {
           for (final item in data['budgets']) {
             await txn.insert('budgets', item);
+          }
+        }
+
+        // Restore Debts (kondisional untuk versi lama)
+        if (data.containsKey('debts')) {
+          for (final item in data['debts']) {
+            await txn.insert('debts', item);
+          }
+        }
+
+        // Restore Repayments (kondisional)
+        if (data.containsKey('debt_repayments')) {
+          for (final item in data['debt_repayments']) {
+            await txn.insert('debt_repayments', item);
+          }
+        }
+
+        // Restore NLP Keywords (kondisional)
+        if (data.containsKey('nlp_debt_keywords')) {
+          for (final item in data['nlp_debt_keywords']) {
+            await txn.insert('nlp_debt_keywords', item);
           }
         }
       });
